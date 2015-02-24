@@ -25,9 +25,9 @@ case $1 in
     ;;
 -s|--shutdown)
     if [ -e /live/config/save-persist -o -e /live/config/persist-save.conf ] && which persist-config &> /dev/null; then
-        gksudo persist-config --shutdown --command poweroff
+        sudo persist-config --shutdown --command poweroff
     else
-        gksudo chvt 1
+        sudo chvt 1
         sudo poweroff
     fi
     ;;
@@ -36,9 +36,9 @@ case $1 in
     ;;
 -r|--reboot)
     if [ -e /live/config/save-persist -o -e /live/config/persist-save.conf ] && which persist-config &> /dev/null; then
-        gksudo persist-config --shutdown --command reboot
+        sudo persist-config --shutdown --command reboot
     else
-        gksudo chvt 1
+        sudo chvt 1
         sudo reboot
     fi
     ;;
