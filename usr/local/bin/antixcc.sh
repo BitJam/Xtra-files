@@ -493,8 +493,6 @@ export ControlCenter=$(cat <<End_of_Text
                   <label>"`gettext $"PC Information"`"</label>
                   </text>
                 </hbox>
-          </vbox>
-	  <vbox>
                 <hbox>
 		  <button>
 		  <input file>"$ICONS/input-mouse.png"</input>
@@ -504,7 +502,10 @@ export ControlCenter=$(cat <<End_of_Text
 		  <label>"`gettext $"Configure Mouse"`"</label>
 		  </text>
 		</hbox>
-                 <hbox>
+
+      </vbox>
+	  <vbox>
+         <hbox>
 		  <button>
 		  <input file>"$ICONS/preferences-desktop-sound.png"</input>
 		  <action>$TERM -e speaker-test --channels 2 --test wav --nloops 3 &</action>
@@ -522,6 +523,17 @@ export ControlCenter=$(cat <<End_of_Text
 		  <label>"`gettext $"Adjust Mixer"`"</label>
 		  </text>
 		</hbox>
+                 <hbox>
+		  <button>
+		  <input file>"$ICONS/preferences-desktop-sound.png"</input>
+		  <action>alsa-set-default-card &</action>
+		  </button>
+		  <text use-markup="true" width-chars="25">
+		  <label>"`gettext $"Set default sound card"`"</label>
+		  </text>
+		</hbox>
+
+
 	  </vbox>
 	</hbox>
 	</frame>
