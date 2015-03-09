@@ -2,6 +2,9 @@
 
 # Create a minimal xorg.conf that sets the resolution and/or the video driver.
 #
+# If our name is "buildxconfig" then we mimic the behavior of the older version.
+# Otherwise we behave better and take all of our input via the command line.
+#
 # If boot parameter "xorgconf" is given or an "xres=xxx" is given then we set
 # the resolution.
 #
@@ -12,46 +15,125 @@
 # Whenever we set the resolution then we also add other modes as fallbacks.
 
 
+ME=${0##*/}
+case $ME in
+    buildxconfig) LEGACY_MODE=true;;
+esac
+
 XORG_CONF=./xorg.conf
 DO_XORG=
 
-main() {
-    local xorg_conf=${1:-$XORG_CONF}
+usage() {
+    local ret=${1:-0}
+    if [ -z "$LEGACY_MODE" ]; then
+        cat <<Usage
+Usage: $ME [options] <xorg-arguments>
 
-    read_cmdline
+Create an xorg.conf file based on the arguments given on the command line.
+Unknown arguments are ignored.  Send the output to stdout unless a file
+is specified.
+Usage
+    else
+        cat <<Legacy_Usage
+Usage: $ME [options] [file-name]
 
-    [ -n "$DO_XORG" ] || exit
+LEGACY MODE:
+Create an xorg.conf file based on boot parameter xorg arguments that
+are in the CMDLINE environment variable, or if that variable is empty
+then in /proc/cmdline.
+Legacy_Usage
+    fi
 
-    [ -n "$SET_RES" ] && set_resolution $X_RES
-    [ -n "$X_DRVR"  ] && set_driver     $X_DRVR
+    cat <<Options_Usage
 
-    write_xorg_conf "$xorg_conf" "$MODES" "$DRIVER"
+Options:
+    -f --file=<file>  Write output to <file> instead of stdout
+    -h --help         Show this usage
+    --                Optional delimiter to indicate the end of options
+
+Xorg Arguments:
+  xorgconf           Make a xorg.conf file
+  noxorg             Don't make an xorg.conf file
+  xres=<WWWWxHHHH>   Set to resolution to <WWWWxHHHH>
+  drvr=<driver>      Set the graphics driver to <driver>
+  xdrvr=<driver>     Set the graphics driver to <driver>
+
+Options_Usage
+
+    [ -z "$LEGACY_MODE" ] && exit $ret
+    test -L $0            || exit $ret
+    local real_name=$(readlink -f $0)
+    cat <<Legacy_Hint
+
+This program is running in legacy mode for backward compatibility.  Please
+use the updated version at:
+    $real_name
+Legacy_Hint
+
+    exit $ret
 }
 
-read_cmdline() { 
+main() {
+
+    # Read command line params that start with "-" and remove them from "$@"
+    local param
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        param=${1#-}
+        shift
+        case $param in
+                -help|h) usage             ;;
+                -file|f) [ $# -gt 0 ] || error "Expected a filename after $param"
+                         FILE=$1; shift    ;;
+            -file=*|f=*) FILE=${param#*=}  ;;
+                      -) break             ;;
+                      *) error "Unknown command line argument -$param"
+        esac
+    done
+
+    if [ "$LEGACY_MODE" ]; then
+        [ $# -gt 0 ] && FILE=$1
+        : ${CMDLINE:=$(cat /proc/cmdline)}
+        read_cmdline $CMDLINE
+        [ -n "$DO_XORG" ] || exit
+    else
+        read_cmdline "$@"
+    fi
+
+    if [ "$FILE" ]; then
+        mkdir -p $(dirname "$FILE")
+        [ -e "$FILE" -a ! -e "$FILE.bak" ] && mv $FILE $FILE.bak
+        write_xorg_conf "$X_RES" "$X_DRVR" > $FILE
+    else
+        write_xorg_conf "$X_RES" "$X_DRVR"
+    fi
+}
+
+read_cmdline() {
     local param value
-    for param in ${CMDLINE:-$(cat /proc/cmdline)}; do
+    for param ; do
         value=${param#*=}
         case $param in
-            xdrvr=*|drvr=*)  X_DRVR=$value ; SET_DRVR=true ; DO_XORG=true ;;
-              xres=*|res=*)  X_RES=$value  ; SET_RES=true  ; DO_XORG=true ;;
-                  xorgconf)                                  DO_XORG=true ;;
-                    noxorg)                                  DO_XORG=     ;;
+            xdrvr=*|drvr=*)  X_DRVR=$value ;  DO_XORG=true ;;
+              xres=*|res=*)  X_RES=$value  ;  DO_XORG=true ;;
+                  xorgconf)                   DO_XORG=true ;;
+                    noxorg)                   exit 0       ;;
           esac
     done
 }
 
-set_resolution() {
+modes_section() {
+    local res_param=$1
+    [ "$res_param" ] || return
     local res_regex="[0-9]\+x[0-9]\+"
-    local x_res=$(echo "$1" | grep -o "$res_regex")
+    local x_res=$(echo "$res_param" | grep -o "$res_regex")
 
-    local hwinfo auto_res modes add_modes 
-    
+    local hwinfo auto_res modes add_modes
+
     hwinfo=$(hwinfo --monitor 2>/dev/null | grep Resolution)
-    
+
     auto_res=$(echo "$hwinfo" | grep Max)
     [ -n "$auto_res" ] || auto_res=$hw_info
-    
+
     auto_res=$(echo "$auto_res" | tail -n 1 | grep -o "$res_regex")
 
     [ -z "$auto_res" -a -n "$x_res" ] && auto_res=$x_res
@@ -68,48 +150,54 @@ set_resolution() {
          1280x768) add_modes=' "1280x800"  "1024x768"  "800x600"'                                   ;;
                 *) add_modes=' "1280x1024" "1024x768"  "800x600"'                                   ;;
     esac
-    
-    add_modes="$(echo "$add_modes" | sed -r -e "s/\s+/ /g" -e "s/ \"$x_res\"//")"
+
+    add_modes=$(echo "$add_modes" | sed -r -e "s/ \"$x_res\"//" -e "s/\s+/ /g")
 
     [ -n "$auto_res" -a "$auto_res" = "$x_res" ] && auto_res=
-    modes="        Modes"
-    [ -n "$x_res"     ] && modes="$modes \"$x_res\""
+    [ -n "$x_res"     ] && modes="\"$x_res\""
     [ -n "$auto_res"  ] && modes="$modes \"$auto_res\""
     [ -n "$add_modes" ] && modes="$modes$add_modes"
 
-    MODES="$(printf "\n$modes")"
+    cat<<Modes_Section
+    SubSection "Display"
+        Modes $modes
+    EndSubSection
+Modes_Section
 }
 
-set_driver() {
+driver_entry() {
     local driver=$1
-    DRIVER="$(printf "\n    Driver     \"$driver\"")"
+    [ "$driver" ] || return
+    printf "\n    Driver     \"$driver\""
 }
 
 write_xorg_conf() {
-    local file=$1  modes=$2  driver=$3
+    local mode=$1  driver=$2
 
-    [ -e "$file" -a ! -e "$file.bak" ] && mv $file $file.bak
-    cat <<Xorg_Conf > $file
+    cat <<Xorg_Conf
 Section "Monitor"
     Identifier "Monitor0"
     Option "DPMS" "true"
     HorizSync    30-75
-    VertRefresh  55-70 
+    VertRefresh  55-70
 EndSection
 
 Section "Device"
-    Identifier "Device0"$driver
+    Identifier "Device0"$(driver_entry $driver)
 EndSection
 
 Section "Screen"
     Identifier "Screen0"
     Monitor "Monitor0"
     Device  "Device0"
-
-    SubSection "Display"$modes
-    EndSubSection
+$(modes_section $mode)
 EndSection
 Xorg_Conf
+}
+
+error() {
+    echo "$ME Error: $*" >&2
+    exit 7
 }
 
 main "$@"
