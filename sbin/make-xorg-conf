@@ -31,7 +31,8 @@ Usage: $ME [options] <xorg-arguments>
 
 Create an xorg.conf file based on the arguments given on the command line.
 Unknown arguments are ignored.  Send the output to stdout unless a file
-is specified.
+is specified.  Use "xres=safe" to set the driver to "vesa" and the resolution
+to a selection of safe (we hope) options.
 Usage
     else
         cat <<Legacy_Usage
@@ -55,6 +56,7 @@ Xorg Arguments:
   xorgconf           Make a xorg.conf file
   noxorg             Don't make an xorg.conf file
   xres=<WWWWxHHHH>   Set to resolution to <WWWWxHHHH>
+  xres=auto          Set resolution to a predefined set of safe options
   drvr=<driver>      Set the graphics driver to <driver>
   xdrvr=<driver>     Set the graphics driver to <driver>
 
@@ -113,6 +115,7 @@ read_cmdline() {
     for param ; do
         value=${param#*=}
         case $param in
+                 xres=safe)  X_DRVR=vesa   ;  X_RES=auto   ;;
             xdrvr=*|drvr=*)  X_DRVR=$value ;  DO_XORG=true ;;
               xres=*|res=*)  X_RES=$value  ;  DO_XORG=true ;;
                   xorgconf)                   DO_XORG=true ;;
@@ -129,16 +132,7 @@ modes_section() {
 
     local hwinfo auto_res modes add_modes
 
-    hwinfo=$(hwinfo --monitor 2>/dev/null | grep Resolution)
-
-    auto_res=$(echo "$hwinfo" | grep Max)
-    [ -n "$auto_res" ] || auto_res=$hw_info
-
-    auto_res=$(echo "$auto_res" | tail -n 1 | grep -o "$res_regex")
-
-    [ -z "$auto_res" -a -n "$x_res" ] && auto_res=$x_res
-
-    case $auto_res in
+    case $x_res in
          1024x768) add_modes=' "800x600"'                                                           ;;
         1280x1024) add_modes=' "1024x768"  "800x600"'                                               ;;
          1280x800) add_modes=' "1280x768"  "1024x768"  "800x600"'                                   ;;
@@ -147,15 +141,13 @@ modes_section() {
         1600x1200) add_modes=' "1450x1050" "1280x1024" "1024x768"  "800x600"'                       ;;
         1450x1050) add_modes=' "1280x1024" "1024x768"  "800x600"'                                   ;;
          1440x900) add_modes=' "1280x1024" "1280x800"  "1024x768"  "800x600"'                       ;;
-         1280x768) add_modes=' "1280x800"  "1024x768"  "800x600"'                                   ;;
-                *) add_modes=' "1280x1024" "1024x768"  "800x600"'                                   ;;
+         1280x768) add_modes=' "1280x800"  "1333x768" "1024x768"  "800x600"'                        ;;
+                *) add_modes=' "1280x1024" "1333x768" "1024x768"  "800x600"'                        ;;
     esac
 
     add_modes=$(echo "$add_modes" | sed -r -e "s/ \"$x_res\"//" -e "s/\s+/ /g")
 
-    [ -n "$auto_res" -a "$auto_res" = "$x_res" ] && auto_res=
     [ -n "$x_res"     ] && modes="\"$x_res\""
-    [ -n "$auto_res"  ] && modes="$modes \"$auto_res\""
     [ -n "$add_modes" ] && modes="$modes$add_modes"
 
     cat<<Modes_Section
