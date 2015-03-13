@@ -25,27 +25,13 @@ DO_XORG=
 
 usage() {
     local ret=${1:-0}
-    if [ -z "$LEGACY_MODE" ]; then
-        cat <<Usage
-Usage: $ME [options] <xorg-arguments>
+    cat <<Usage
+Usage: $ME [options] [driver,resolution,"safe"]
 
 Create an xorg.conf file based on the arguments given on the command line.
 Unknown arguments are ignored.  Send the output to stdout unless a file
 is specified.  Use "xres=safe" to set the driver to "vesa" and the resolution
 to a selection of safe (we hope) options.
-Usage
-    else
-        cat <<Legacy_Usage
-Usage: $ME [options] [file-name]
-
-LEGACY MODE:
-Create an xorg.conf file based on boot parameter xorg arguments that
-are in the CMDLINE environment variable, or if that variable is empty
-then in /proc/cmdline.
-Legacy_Usage
-    fi
-
-    cat <<Options_Usage
 
 Options:
     -f --file=<file>  Write output to <file> instead of stdout
@@ -53,25 +39,14 @@ Options:
     --                Optional delimiter to indicate the end of options
 
 Xorg Arguments:
-  xorgconf           Make a xorg.conf file
-  noxorg             Don't make an xorg.conf file
-  xres=<WWWWxHHHH>   Set to resolution to <WWWWxHHHH>
-  xres=auto          Set resolution to a predefined set of safe options
-  drvr=<driver>      Set the graphics driver to <driver>
-  xdrvr=<driver>     Set the graphics driver to <driver>
+A comma delimited list of options.
 
-Options_Usage
+    safe              Set driver to "vesa" and set default resultions
+    auto              Set default resolutions
+    HHHHxWWWW         Set the resolution
 
-    [ -z "$LEGACY_MODE" ] && exit $ret
-    test -L $0            || exit $ret
-    local real_name=$(readlink -f $0)
-    cat <<Legacy_Hint
-
-This program is running in legacy mode for backward compatibility.  Please
-use the updated version at:
-    $real_name
-Legacy_Hint
-
+Any other argument is considered to be the name of a graphics driver.
+Usage
     exit $ret
 }
 
@@ -98,7 +73,7 @@ main() {
         read_cmdline $CMDLINE
         [ -n "$DO_XORG" ] || exit
     else
-        read_cmdline "$@"
+        read_args $1
     fi
 
     if [ "$FILE" ]; then
@@ -108,6 +83,21 @@ main() {
     else
         write_xorg_conf "$X_RES" "$X_DRVR"
     fi
+}
+
+read_args() {
+    local param
+    for param in ${1//,/ };  do
+        case $param in
+            safe)   X_RES=auto  ; X_DRVR=vesa  ;;
+            auto)   X_RES=auto                 ;;
+               *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
+                        X_RES=$param
+                    else
+                        X_DRVR=$param
+                    fi;;
+        esac
+    done
 }
 
 read_cmdline() {
