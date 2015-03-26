@@ -77,7 +77,7 @@ test -d $excludes_dir && edit_excludes=$(cat <<Edit_Excludes
 Edit_Excludes
 )
 
-[ -e /live/config/save-persist -o -e /live/config/persist-save.conf]  && persist_save=$(cat <<Persist_Save
+[ -e /live/config/save-persist -o -e /live/config/persist-save.conf ]  && persist_save=$(cat <<Persist_Save
     <hbox>
       <button>
         <input file>$ICONS/palimpsest.png</input>
@@ -115,6 +115,10 @@ live_tab=$(cat <<Live_Tab
         <label>$(echo $"Configure live persistence")</label>
       </text>
     </hbox>
+$edit_bootloader
+$persist_save
+  </vbox>
+  <vbox>
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
@@ -125,11 +129,7 @@ live_tab=$(cat <<Live_Tab
       </text>
     </hbox>
 $edit_excludes
-  </vbox>
-  <vbox>
-$persist_save
 $live_remaster
-$edit_bootloader
   </vbox>
 </hbox> </frame> </vbox>
 Live_Tab
