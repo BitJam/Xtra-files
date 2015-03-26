@@ -15,7 +15,7 @@
 #                                         Hide live tab on non-live systems.  Use echo instead of gettext.
 #                                         Remove unneeded doublequotes between tags.  Use $(...) instead of `...`.
 # Acknowledgements: Original script by KDulcimer of TinyMe. http://tinyme.mypclinuxos.com
-#################################################################################################################################################
+##################################################################################################################
 
 TEXTDOMAINDIR=/usr/share/locale
 TEXTDOMAIN=antixcc.sh
@@ -23,7 +23,6 @@ TEXTDOMAIN=antixcc.sh
 ICONS=/usr/share/icons/antiX
 ED1=geany
 TERM=urxvt
-AS_USER="su -c"
 
 if [ $UID -ne 0 ]; then
     echo "Relaunching as root ..."
@@ -31,16 +30,18 @@ if [ $UID -ne 0 ]; then
 fi
 
 if [ "$USER" = root ]; then 
-    yad --title $"Error" --text $"This program must be run first as a normal user"
+    yad --center --on-top --width=680 --title $"Error" \
+        --text "\n"$"This program must be run first as a normal user""\n"
     exit 3
 fi
 
 home=$(getent passwd $USER | cut -d: -f6)
 root_home=$(getent passwd root | cut -d: -f6)
 
+AS_USER="su -c"
 AS_ROOT="env HOME=$root_home"
 ED_ROOT="$AS_ROOT $ED1"
-ROOT_TERM="$AS_ROOT $TERM"
+TERM_ROOT="$AS_ROOT $TERM"
 
 export XAUTHORITY=$home/.Xauthority
 
@@ -239,7 +240,7 @@ export ControlCenter=$(cat <<End_of_Text
     <hbox>
       <button>
         <input file>$ICONS/gnome-settings-default-applications.png</input>
-        <action>$ROOT_TERM -e sysv-rc-conf &</action>
+        <action>$TERM_ROOT -e sysv-rc-conf &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Choose Startup Services")</label>
@@ -271,7 +272,7 @@ export ControlCenter=$(cat <<End_of_Text
     <hbox>
       <button>
         <input file>$ICONS/time-admin.png</input>
-        <action>$ROOT_TERM -e "dpkg-reconfigure tzdata" &</action>
+        <action>$TERM_ROOT -e "dpkg-reconfigure tzdata" &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set Date and Time")</label>
@@ -286,7 +287,7 @@ export ControlCenter=$(cat <<End_of_Text
     <hbox>
       <button>
         <input file>$ICONS/network-wired.png</input>
-        <action>$ROOT_TERM -e ceni &</action>
+        <action>$TERM_ROOT -e ceni &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Network Interfaces (ceni)")</label>
@@ -459,7 +460,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/drive-harddisk-system.png</input>
-        <action>$ROOT_TERM -e partimage &</action>
+        <action>$TERM_ROOT -e partimage &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Image a Partition")</label>
