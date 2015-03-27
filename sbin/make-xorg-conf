@@ -23,20 +23,24 @@ esac
 XORG_CONF=./xorg.conf
 DO_XORG=
 
+VBOX_OPTS="HORIZ=28-75  DRIVER=vesa"
+DRIVER_DIR=/mnt/sq1/usr/lib/xorg/modules/drivers
+DRIVER_EXT=_drv.so
+
+VALID_DRIVERS=$(ls $DRIVER_DIR | sed -n "s/$DRIVER_EXT//p")
+
 usage() {
     local ret=${1:-0}
     cat <<Usage
-Usage: $ME [options] [driver,resolution,"safe"]
+Usage: $ME [options] [<driver>,<resolution>,auto,safe,vbox]
 
 Create an xorg.conf file based on the arguments given on the command line.
-Unknown arguments are ignored.  Send the output to stdout unless a file
-is specified.  Use "xres=safe" to set the driver to "vesa" and the resolution
-to a selection of safe (we hope) options.
 
 Options:
-    -f --file=<file>  Write output to <file> instead of stdout
-    -h --help         Show this usage
-    --                Optional delimiter to indicate the end of options
+    -f --force          Force creation even if driver specfied is not found
+    -h --help           Show this usage
+    -o --output=<file>  Write output to <file> instead of stdout
+    --                  Optional delimiter to indicate the end of options
 
 Xorg Arguments:
 A comma delimited list of options.
@@ -44,8 +48,18 @@ A comma delimited list of options.
     safe              Set driver to "vesa" and set default resolutions
     auto              Set default resolutions
     HHHHxWWWW         Set the resolution
+    h=xxxx            Set horizontal sync frequency range
+    v=yyyy            Set vertical refresh frequency range
+    vbox              Set the driver and horizontal frequency:
+                        $VBOX_OPTS
 
 Any other argument is considered to be the name of a graphics driver.
+Use --force to create an xorg.conf that specifies a driver that is not
+on the host system.
+
+Available drivers:
+$(echo "$VALID_DRIVERS" | columns -W 75 -I "  ")
+
 Usage
     exit $ret
 }
@@ -58,10 +72,11 @@ main() {
         param=${1#-}
         shift
         case $param in
+               -force|f) FORCE=true        ;;
                 -help|h) usage             ;;
-                -file|f) [ $# -gt 0 ] || error "Expected a filename after $param"
+              -output|o) [ $# -gt 0 ] || error "Expected a filename after $param"
                          FILE=$1; shift    ;;
-            -file=*|f=*) FILE=${param#*=}  ;;
+          -output=*|o=*) FILE=${param#*=}  ;;
                       -) break             ;;
                       *) error "Unknown command line argument -$param"
         esac
@@ -79,23 +94,34 @@ main() {
     if [ "$FILE" ]; then
         mkdir -p $(dirname "$FILE")
         [ -e "$FILE" -a ! -e "$FILE.bak" ] && mv $FILE $FILE.bak
-        write_xorg_conf "$X_RES" "$X_DRVR" > $FILE
+        write_xorg_conf "$RESOLUTION" "$DRIVER" > $FILE
     else
-        write_xorg_conf "$X_RES" "$X_DRVR"
+        write_xorg_conf "$RESOLUTION" "$DRIVER"
     fi
 }
 
 read_args() {
-    local param
+    local param value
     for param in ${1//,/ };  do
+        value=${param#*=}
+
         case $param in
-            safe)   X_RES=auto  ; X_DRVR=vesa  ;;
-            auto)   X_RES=auto                 ;;
+            vbox)   eval "$VBOX_OPTS"                 ;;
+             h=*)   HORIZ=$value                      ;;
+             v=*)    VERT=$value                      ;;
+            safe)   RESOLUTION=auto     ; DRIVER=vesa ;;
+            auto)   RESOLUTION=auto                   ;;
+
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
-                        X_RES=$param
-                    else
-                        X_DRVR=$param
-                    fi;;
+                        RESOLUTION=$param
+                        continue
+                    fi
+                    if [ "$FORCE" -o -e $DRIVER_DIR/$param$DRIVER_EXT ]; then
+                        DRIVER=$param
+                        continue
+                    fi
+                    driver_error $param
+                    ;;
         esac
     done
 }
@@ -105,11 +131,11 @@ read_cmdline() {
     for param ; do
         value=${param#*=}
         case $param in
-                 xres=safe)  X_DRVR=vesa   ;  X_RES=auto   ;;
-            xdrvr=*|drvr=*)  X_DRVR=$value ;  DO_XORG=true ;;
-              xres=*|res=*)  X_RES=$value  ;  DO_XORG=true ;;
-                  xorgconf)                   DO_XORG=true ;;
-                    noxorg)                   exit 0       ;;
+                 xres=safe)  DRIVER=vesa       ;  RESOLUTION=auto ;;
+            xdrvr=*|drvr=*)  DRIVER=$value     ;  DO_XORG=true    ;;
+              xres=*|res=*)  RESOLUTION=$value ;  DO_XORG=true    ;;
+                  xorgconf)  DO_XORG=true                         ;;
+                    noxorg)  exit 0                               ;;
           esac
     done
 }
@@ -118,11 +144,11 @@ modes_section() {
     local res_param=$1
     [ "$res_param" ] || return
     local res_regex="[0-9]\+x[0-9]\+"
-    local x_res=$(echo "$res_param" | grep -o "$res_regex")
+    local resolution=$(echo "$res_param" | grep -o "$res_regex")
 
     local modes add_modes
 
-    case $x_res in
+    case $resolution in
          1024x768) add_modes=' "800x600"'                                                           ;;
         1280x1024) add_modes=' "1024x768"  "800x600"'                                               ;;
          1280x800) add_modes=' "1280x768"  "1024x768"  "800x600"'                                   ;;
@@ -135,10 +161,10 @@ modes_section() {
                 *) add_modes=' "1280x1024" "1333x768" "1024x768"  "800x600"'                        ;;
     esac
 
-    add_modes=$(echo "$add_modes" | sed -r -e "s/ \"$x_res\"//" -e "s/\s+/ /g")
+    add_modes=$(echo "$add_modes" | sed -r -e "s/ \"$resolution\"//" -e "s/\s+/ /g")
 
-    [ -n "$x_res"     ] && modes="\"$x_res\""
-    [ -n "$add_modes" ] && modes="$modes$add_modes"
+    [ -n "$resolution" ] && modes="\"$resolution\""
+    [ -n "$add_modes"  ] && modes="$modes$add_modes"
 
     cat<<Modes_Section
     SubSection "Display"
@@ -151,6 +177,18 @@ driver_entry() {
     local driver=$1
     [ "$driver" ] || return
     printf "\n    Driver     \"$driver\""
+}
+
+horizontal_entry() {
+    local range=$1
+    [ "$range" ] || return
+    printf "\n    HorizSync    $range"
+}
+
+vertical_entry() {
+    local range=$1
+    [ "$range" ] || return
+    printf "\n    VertRefresh  $range"
 }
 
 write_xorg_conf() {
@@ -168,9 +206,7 @@ write_xorg_conf() {
 
 Section "Monitor"
     Identifier "Monitor0"
-    Option "DPMS" "true"
-    HorizSync    30-75
-    VertRefresh  55-70
+    Option "DPMS" "true"$(horizontal_entry $HORIZ)$(vertical_entry $VERT)
 EndSection
 
 Section "Device"
@@ -186,9 +222,27 @@ EndSection
 Xorg_Conf
 }
 
+driver_error() {
+    local driver=$1
+    cat <<Driver_Error >&2
+$ME error: Unrecognized (uninstalled?) video driver: $driver
+
+Available drivers:
+$(echo "$VALID_DRIVERS" | columns -W 75 -I "  ")
+
+Use --force to force use of an unrecognized driver
+Driver_Error
+
+    exit 3
+}
+
 error() {
-    echo "$ME Error: $*" >&2
+    echo "$ME error: $*" >&2
     exit 7
+}
+
+warn() {
+    echo "$ME Warning: $*" >&2
 }
 
 main "$@"
