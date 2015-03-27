@@ -24,7 +24,7 @@ XORG_CONF=./xorg.conf
 DO_XORG=
 
 VBOX_OPTS="HORIZ=28-75  DRIVER=vesa"
-DRIVER_DIR=/mnt/sq1/usr/lib/xorg/modules/drivers
+DRIVER_DIR=/usr/lib/xorg/modules/drivers
 DRIVER_EXT=_drv.so
 
 VALID_DRIVERS=$(ls $DRIVER_DIR | sed -n "s/$DRIVER_EXT//p")
