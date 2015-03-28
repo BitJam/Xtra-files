@@ -29,6 +29,12 @@ DRIVER_EXT=_drv.so
 
 VALID_DRIVERS=$(ls $DRIVER_DIR | sed -n "s/$DRIVER_EXT//p")
 
+ WHITE=$(printf "\e[1;37m")
+   RED=$(printf "\e[0;31m")
+YELLOW=$(printf "\e[1;33m")
+    NC=$(printf "\e[0m")
+
+
 usage() {
     local ret=${1:-0}
     cat <<Usage
@@ -225,24 +231,24 @@ Xorg_Conf
 driver_error() {
     local driver=$1
     cat <<Driver_Error >&2
-$ME error: Unrecognized (uninstalled?) video driver: $driver
-
+$WHITE$ME$YELLOW Error:$RED Unrecognized (uninstalled?) video driver:$WHITE $driver
+$RED
 Available drivers:
 $(echo "$VALID_DRIVERS" | column -x -c 70)
 
-Use --force to force use of an unrecognized driver
+Use --force to force use of an unrecognized driver$NC
 Driver_Error
 
     exit 3
 }
 
 error() {
-    echo "$ME error: $*" >&2
+    echo "$WHITE$ME$YELLOW Error:$RED $*$NC" >&2
     exit 7
 }
 
 warn() {
-    echo "$ME Warning: $*" >&2
+    echo "$ME$YELLOW Warning: $*$NC" >&2
 }
 
 main "$@"
