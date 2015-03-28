@@ -23,7 +23,7 @@ esac
 XORG_CONF=./xorg.conf
 DO_XORG=
 
-VBOX_OPTS="HORIZ=28-75  DRIVER=vesa"
+VBOX_OPTS="HORIZ=28-70  DRIVER=vesa RESOLUTION=1280x1024"
 DRIVER_DIR=/usr/lib/xorg/modules/drivers
 DRIVER_EXT=_drv.so
 
