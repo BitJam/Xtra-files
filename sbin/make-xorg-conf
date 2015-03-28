@@ -80,7 +80,7 @@ main() {
         case $param in
                -force|f) FORCE=true        ;;
                 -help|h) usage             ;;
-              -output|o) [ $# -gt 0 ] || error "Expected a filename after $param"
+              -output|o) [ $# -gt 0 ] || error "Expected a filename after -$param"
                          FILE=$1; shift    ;;
           -output=*|o=*) FILE=${param#*=}  ;;
                       -) break             ;;
