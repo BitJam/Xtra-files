@@ -1,0 +1,11 @@
+#!/bin/bash
+volumeicon & 
+fbxkb &
+
+# Set default live keyboard options
+setxkbmap -layout -option grp:alt_shift_toggle,terminate:ctrl_alt_bksp,grp_led:scroll
+
+#toram-eject
+(sleep 5 && toram-eject) &
+(sleep 5 && sudo persist-config --startup) &
+
