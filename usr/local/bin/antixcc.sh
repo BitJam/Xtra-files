@@ -21,7 +21,7 @@ TEXTDOMAINDIR=/usr/share/locale
 TEXTDOMAIN=antixcc.sh
 # Options
 ICONS=/usr/share/icons/antiX
-ED1=geany
+ED1="geany -i"
 TERM=urxvt
 
 if [ $UID -ne 0 ]; then
