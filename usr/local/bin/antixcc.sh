@@ -48,6 +48,48 @@ export XAUTHORITY=$home/.Xauthority
 Desktop=$"Desktop" System=$"System" Network=$"Network" Session=$"Session"
 Live=$"Live" Disks=$"Disks" Hardware=$"Hardware"
 
+[ -d $home/.fluxbox -a -e /usr/share/xsessions/fluxbox.desktop ] \
+    && edit_fluxbox=$(cat <<Edit_Fluxbox
+    <hbox>
+      <button>
+        <input file>$ICONS/desktop-effects.png</input>
+        <action>$AS_USER "$ED1 $home/.fluxbox/overlay $home/.fluxbox/keys $home/.fluxbox/init $home/.fluxbox/startup $home/.fluxbox/apps $home/.fluxbox/menu" - $USER &</action>
+      </button>
+      <text use-markup="true" width-chars="25">
+        <label>$(echo $"Edit Fluxbox Settings")</label>
+      </text>
+    </hbox>
+Edit_Fluxbox
+)
+
+[ -d $home/.icewm -a -e /usr/share/xsessions/IceWM.desktop ] \
+    && edit_icewm=$(cat <<Edit_Icewm
+    <hbox>
+      <button>
+        <input file>$ICONS/desktop-effects.png</input>
+        <action>$AS_USER "$ED1 $home/.icewm/winoptions $home/.icewm/preferences $home/.icewm/keys $home/.icewm/startup $home/.icewm/toolbar $home/.icewm/menu" - $USER &</action>
+      </button>
+      <text use-markup="true" width-chars="25">
+        <label>$(echo $"Edit IceWM Settings")</label>
+      </text>
+    </hbox>
+Edit_Icewm
+)
+
+[ -d $home/.jwm -a -e /usr/share/xsessions/Jwm.desktop ] \
+    && edit_jwm=$(cat <<Edit_Jwm
+    <hbox>
+      <button>
+        <input file>$ICONS/desktop-effects.png</input>
+        <action>$AS_USER "$ED1 $home/.jwm/preferences $home/.jwm/keys $home/.jwm/tray $home/.jwm/startup $home/.jwmrc $home/.jwm/menu" - $USER &</action>
+      </button>
+      <text use-markup="true" width-chars="25">
+        <label>$(echo $"Edit jwm Settings")</label>
+      </text>
+    </hbox>
+Edit_Jwm
+)
+
 # Edit syslinux.cfg if the device it is on is mounted read-write
 grep -q " /live/boot-dev .*\<rw\>" /proc/mounts \
     && edit_bootloader=$(cat <<Edit_Bootloader
@@ -160,17 +202,7 @@ export ControlCenter=$(cat <<End_of_Text
         <label>$(echo $"Choose Wallpaper")</label>
       </text>
     </hbox>
-
-    <hbox>
-      <button>
-        <input file>$ICONS/desktop-effects.png</input>
-        <action>$AS_USER "$ED1 $home/.fluxbox/overlay $home/.fluxbox/keys $home/.fluxbox/init $home/.fluxbox/startup $home/.fluxbox/apps $home/.fluxbox/menu" - $USER &</action>
-      </button>
-      <text use-markup="true" width-chars="25">
-        <label>$(echo $"Edit Fluxbox Settings")</label>
-      </text>
-    </hbox>
-
+$edit_fluxbox
     <hbox>
       <button>
         <input file>$ICONS/utilities-system-monitor.png</input>
@@ -192,27 +224,8 @@ export ControlCenter=$(cat <<End_of_Text
         <label>$(echo $"Change Gtk2 and Icon Themes")</label>
       </text>
     </hbox>
-
-    <hbox>
-      <button>
-        <input file>$ICONS/desktop-effects.png</input>
-        <action>$AS_USER "$ED1 $home/.icewm/winoptions $home/.icewm/preferences $home/.icewm/keys $home/.icewm/startup $home/.icewm/toolbar $home/.icewm/menu" - $USER &</action>
-      </button>
-      <text use-markup="true" width-chars="25">
-        <label>$(echo $"Edit IceWM Settings")</label>
-      </text>
-    </hbox>
-
-    <hbox>
-      <button>
-        <input file>$ICONS/desktop-effects.png</input>
-        <action>$AS_USER "$ED1 $home/.jwm/preferences $home/.jwm/keys $home/.jwm/tray $home/.jwm/startup $home/.jwmrc $home/.jwm/menu" - $USER &</action>
-      </button>
-      <text use-markup="true" width-chars="25">
-        <label>$(echo $"Edit jwm Settings")</label>
-      </text>
-    </hbox>
-
+$edit_icewm
+$edit_jwm
   </vbox>
 </hbox> </frame> </vbox>
 <vbox> <frame> <hbox>
