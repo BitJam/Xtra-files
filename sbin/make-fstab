@@ -454,11 +454,7 @@ BLKID
 
         # FIXME: can we do better than this?  It seems we need to load the
         # modules manually if udev is not yet running.
-        case $type in
-       ext?|ntfs)  ;;
-               *)  echo "modprobe $type"
-                   test -d /sys/module/$type || modprobe $type ;;
-        esac
+        test -d /sys/module/$type || modprobe -q $type
         mount $mntpnt
 
     done << BLKID
