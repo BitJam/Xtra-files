@@ -448,8 +448,18 @@ BLKID
 
         [ "$CMD_MOUNT" = usb ] && ! is_usb_or_removable $dev && continue
 
+        [ "$AM_ROOT" ] || continue
+
         qsay "Automount $dev at $mntpnt"
-        [ "$AM_ROOT" ] && mount $mntpnt
+
+        # FIXME: can we do better than this?  It seems we need to load the
+        # modules manually if udev is not yet running.
+        case $type in
+       ext?|ntfs)  ;;
+               *)  echo "modprobe $type"
+                   test -d /sys/module/$type || modprobe $type ;;
+        esac
+        mount $mntpnt
 
     done << BLKID
 $($SUDO blkid -o device)
