@@ -1,0 +1,106 @@
+#!/bin/bash
+
+ME=${0##*/}
+
+DEF_LIST="2:antiX-blue-purple 3:antiX-rev-neutral 4:antiX-purple 5:antiX-rev-blue 6:antiX-neutral-purple"
+LOG_FILE=/var/log/splash-all.log
+[ $UID = 0 ] || LOG_FILE=./splash-all.log
+
+SPLASH=
+PRETEND=
+THEME=default
+
+usage() {
+    local ret=${1:0}
+    cat <<Usage
+Usage: $ME [options] term1:theme1 term2:theme2 ...
+
+Options:
+    -a --auto     Only run if a splash= boot parameter was given
+                  Log messages to $LOG_FILE
+                  Don't set theme on tty1
+    -h --help     Show this help
+    -p --pretend  Just print what would be done
+    -q --quiet    Supress messages
+
+Default themes:
+$(echo 1:default $DEF_LIST | tr " " "\n" | sed "s/^/  /")
+
+Usage
+    exit $ret
+}
+
+main() {
+
+    local param
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        param=${1#-}
+        shift
+        case $param in
+            -auto|a) AUTO_MODE=true  ;;
+            -help|h) usage           ;;
+         -pretend|p) PRETEND=echo    ;;
+           -quiet|q) QUIET_MODE=true ;;
+        esac
+    done
+
+    [ -e /sys/class/graphics/fb0/virtual_size ] || vexit "No framebuffer found"
+    #which splash-term &> /dev/null              || vexit "The splash-term program was not found"
+
+    read_splash_param
+    #echo "SPLASH=$SPLASH"
+
+    if [ "$AUTO_MODE" ]; then
+        [ "$SPLASH" ] || return
+        set_decor $DEF_LIST &>> $LOG_FILE
+
+    elif [ "$QUIET_MODE" ]; then
+        set_decor 1:$THEME $DEF_LIST "$@" &> /dev/null
+
+    else
+        set_decor 1:$THEME $DEF_LIST "$@"
+    fi
+}
+
+set_decor() {
+    for term_theme; do
+        term=$(echo $term_theme  | cut -d: -f1)
+        theme=$(echo $term_theme | cut -d: -f2)
+        [ -z "$term" ]                               && vsay "No terminal in '$term_theme'" && continue
+        [ -z "$theme" ]                              && vsay "No theme in '$term_theme'"    && continue
+        [ "${term##[1-9]}" -a "${term##[0-9]0-9]}" ] && vsay "Bad terminal number: $term"   && continue
+        [ ! -d /etc/splash/$theme ]                  && vsay "Unrecognized theme: $theme"   && continue
+        $PRETEND splash-term $term $theme
+    done
+}
+
+read_splash_param() {
+    local param sparam
+    for param in ${CMDLINE:-$(cat /proc/cmdline)}; do
+        case $param in 
+            splash)  SPLASH=on ;; 
+          splash=*)  SPLASH=$SPLASH${SPLASH:+,}${param#*=} ;;
+        esac
+    done
+
+    for sparam in ${SPLASH//,/ }; do
+        case $sparam in
+            theme=*|t=*) THEME=${sparam#*=} ;;
+                    off) SPLASH=            ;;
+        esac
+    done
+}
+
+vsay() {
+    echo "$ME: $*"
+    return 0
+}
+
+vexit() {
+    echo "$ME exit: $*"
+    exit 0
+}
+
+main "$@"
+
+exit 0

@@ -16,8 +16,7 @@ restore=/live/etc/init.d/live-restore-services
 
 # Add a background image to every virtual console if the splash
 # boot parameter was given
-#cat /proc/cmdline | grep -q "\<splash=" && /sbin/splash-all
-/sbin/splash-all
+/sbin/splash-all --auto
 
 # Enable fstab auto-stuff after udev has run
 fstab_rules=/live/etc/udev/rules.d/90-fstab-automount.rules
