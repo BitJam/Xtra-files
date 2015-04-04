@@ -2,7 +2,7 @@
 
 ME=${0##*/}
 
-W_MANAGERS="fluxbox icemwn jwm"
+W_MANAGERS="fluxbox icemwm jwm"
 PRETEND=
 
 usage() {
@@ -33,6 +33,7 @@ main() {
             -help|h) usage                       ;;
          -pretend|p) PRETEND=echo                ;;
          -PRETEND|P) PRETEND=echo ; VERBOSE=true ;;
+                  *) error "Unknown argument: -$param" ;;
         esac
     done
 
