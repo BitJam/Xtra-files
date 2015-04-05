@@ -15,35 +15,14 @@
 #                                         Hide live tab on non-live systems.  Use echo instead of gettext.
 #                                         Remove unneeded doublequotes between tags.  Use $(...) instead of `...`.
 # Acknowledgements: Original script by KDulcimer of TinyMe. http://tinyme.mypclinuxos.com
-##################################################################################################################
+#################################################################################################################################################
 
 TEXTDOMAINDIR=/usr/share/locale
 TEXTDOMAIN=antixcc.sh
 # Options
 ICONS=/usr/share/icons/antiX
-ED1="geany -i"
-TERM=urxvt
 
-if [ $UID -ne 0 ]; then
-    echo "Relaunching as root ..."
-    exec gksu -k -- "$0"
-fi
-
-if [ "$USER" = root ]; then 
-    yad --center --on-top --width=680 --title $"Error" \
-        --text "\n"$"This program must be run first as a normal user""\n"
-    exit 3
-fi
-
-home=$(getent passwd $USER | cut -d: -f6)
-root_home=$(getent passwd root | cut -d: -f6)
-
-AS_USER="su -c"
-AS_ROOT="env HOME=$root_home"
-ED_ROOT="$AS_ROOT $ED1"
-TERM_ROOT="$AS_ROOT $TERM"
-
-export XAUTHORITY=$home/.Xauthority
+EDITOR="geany -i"
 
 Desktop=$"Desktop" System=$"System" Network=$"Network" Session=$"Session"
 Live=$"Live" Disks=$"Disks" Hardware=$"Hardware"
@@ -53,7 +32,7 @@ Live=$"Live" Disks=$"Disks" Hardware=$"Hardware"
     <hbox>
       <button>
         <input file>$ICONS/desktop-effects.png</input>
-        <action>$AS_USER "$ED1 $home/.fluxbox/overlay $home/.fluxbox/keys $home/.fluxbox/init $home/.fluxbox/startup $home/.fluxbox/apps $home/.fluxbox/menu" - $USER &</action>
+        <action>$EDITOR $home/.fluxbox/overlay $home/.fluxbox/keys $home/.fluxbox/init $home/.fluxbox/startup $home/.fluxbox/apps $home/.fluxbox/menu&</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit Fluxbox Settings")</label>
@@ -67,7 +46,7 @@ Edit_Fluxbox
     <hbox>
       <button>
         <input file>$ICONS/desktop-effects.png</input>
-        <action>$AS_USER "$ED1 $home/.icewm/winoptions $home/.icewm/preferences $home/.icewm/keys $home/.icewm/startup $home/.icewm/toolbar $home/.icewm/menu" - $USER &</action>
+        <action>$EDITOR $home/.icewm/winoptions $home/.icewm/preferences $home/.icewm/keys $home/.icewm/startup $home/.icewm/toolbar $home/.icewm/menu&</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit IceWM Settings")</label>
@@ -81,7 +60,7 @@ Edit_Icewm
     <hbox>
       <button>
         <input file>$ICONS/desktop-effects.png</input>
-        <action>$AS_USER "$ED1 $home/.jwm/preferences $home/.jwm/keys $home/.jwm/tray $home/.jwm/startup $home/.jwmrc $home/.jwm/menu" - $USER &</action>
+        <action>$EDITOR $home/.jwm/preferences $home/.jwm/keys $home/.jwm/tray $home/.jwm/startup $home/.jwmrc $home/.jwm/menu</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit jwm Settings")</label>
@@ -90,13 +69,14 @@ Edit_Icewm
 Edit_Jwm
 )
 
-# Edit syslinux.cfg if the device it is on is mounted read-write
+
+# Edit syslinux.cfg if the device it is own is mounted read-write
 grep -q " /live/boot-dev .*\<rw\>" /proc/mounts \
     && edit_bootloader=$(cat <<Edit_Bootloader
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>$ED_ROOT /live/boot-dev/boot/syslinux/syslinux.cfg /live/boot-dev/boot/syslinux/gfxboot.cfg &</action>
+        <action>gksu $EDITOR /live/boot-dev/boot/syslinux/syslinux.cfg /live/boot-dev/boot/syslinux/gfxboot.cfg &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit Bootloader menu")</label>
@@ -110,7 +90,7 @@ test -d $excludes_dir && edit_excludes=$(cat <<Edit_Excludes
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>$ED_ROOT $excludes_dir/*.list &</action>
+        <action>gksu $EDITOR $excludes_dir/*.list &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit Exclude files")</label>
@@ -123,7 +103,7 @@ Edit_Excludes
     <hbox>
       <button>
         <input file>$ICONS/palimpsest.png</input>
-        <action>$AS_ROOT persist-save &</action>
+        <action>gksu persist-save &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Save root persistence")</label>
@@ -136,7 +116,7 @@ Persist_Save
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>$AS_ROOT remaster-live &</action>
+        <action>gksu remaster-live &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Remaster")</label>
@@ -151,7 +131,7 @@ live_tab=$(cat <<Live_Tab
     <hbox>
       <button>
         <input file>$ICONS/palimpsest.png</input>
-        <action>$AS_ROOT persist-config &</action>
+        <action>persist-config &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Configure live persistence")</label>
@@ -164,7 +144,7 @@ $persist_save
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>$AS_ROOT persist-makefs &</action>
+        <action>gksu persist-makefs &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set up live persistence")</label>
@@ -196,7 +176,7 @@ export ControlCenter=$(cat <<End_of_Text
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-wallpaper.png</input>
-        <action>$AS_USER "wallpaper.py" - $USER &</action>
+        <action>wallpaper.py &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Choose Wallpaper")</label>
@@ -206,7 +186,7 @@ $edit_fluxbox
     <hbox>
       <button>
         <input file>$ICONS/utilities-system-monitor.png</input>
-        <action>$AS_USER "$ED1 $home/.conkyrc" - $USER &</action>
+        <action>desktop-defaults-run -te ~/.conkyrc  &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit System Monitor")</label>
@@ -218,7 +198,7 @@ $edit_fluxbox
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-theme.png</input>
-        <action>$AS_USER "lxappearance" - $USER &</action>
+        <action>lxappearance &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Change Gtk2 and Icon Themes")</label>
@@ -234,7 +214,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/synaptic.png</input>
-        <action>$AS_ROOT synaptic &</action>
+        <action>gksu synaptic &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Manage Packages")</label>
@@ -244,7 +224,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/applications-system.png</input>
-        <action>$AS_ROOT antix-system.sh &</action>
+        <action>gksu antix-system.sh &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Configure System")</label>
@@ -253,7 +233,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/gnome-settings-default-applications.png</input>
-        <action>$TERM_ROOT -e sysv-rc-conf &</action>
+        <action>desktop-defaults-run -t su -c sysv-rc-conf &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Choose Startup Services")</label>
@@ -265,7 +245,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/config-users.png</input>
-        <action>$AS_ROOT user-management &</action>
+        <action>gksu user-management &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Manage Users")</label>
@@ -275,7 +255,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>$ED_ROOT /etc/fstab /etc/default/keyboard /boot/grub/menu.lst /etc/slim.conf /etc/apt/sources.list.d/various.list /etc/apt/sources.list.d/antix.list /etc/apt/sources.list.d/debian.list &</action>
+        <action>gksu $EDITOR /etc/fstab /etc/default/keyboard /boot/grub/menu.lst /etc/slim.conf /etc/apt/sources.list.d/various.list /etc/apt/sources.list.d/antix.list /etc/apt/sources.list.d/debian.list &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit Config Files")</label>
@@ -285,7 +265,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/time-admin.png</input>
-        <action>$TERM_ROOT -e "dpkg-reconfigure tzdata" &</action>
+        <action>urxvt -e su -c "dpkg-reconfigure tzdata" &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set Date and Time")</label>
@@ -300,7 +280,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/network-wired.png</input>
-        <action>$TERM_ROOT -e ceni &</action>
+        <action>desktop-defaults-run -t sudo ceni &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Network Interfaces (ceni)")</label>
@@ -310,7 +290,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/network-wired.png</input>
-        <action>$AS_ROOT umts-panel &</action>
+        <action>umts-panel &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Configure GPRS/UMTS Connection")</label>
@@ -320,29 +300,18 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/network-wireless.png</input>
-        <action>$AS_USER "wicd-gtk" - $USER &</action>
+        <action>wicd-gtk &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Connect Wirelessly (wicd)")</label>
       </text>
     </hbox>
   </vbox>
-
   <vbox>
     <hbox>
       <button>
-        <input file>$ICONS/network-wireless.png</input>
-        <action>$AS_ROOT rutilt &</action>
-      </button>
-      <text use-markup="true" width-chars="25">
-        <label>$(echo $"Wireless (rutilt)")</label>
-      </text>
-    </hbox>
-
-    <hbox>
-      <button>
         <input file>$ICONS/network-wired.png</input>
-        <action>$AS_USER gnome-ppp - $USER&</action>
+        <action>gnome-ppp &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Configure Dial-Up Connection")</label>
@@ -352,7 +321,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/preferences-system-firewall.png</input>
-        <action>$AS_ROOT gufw &</action>
+        <action>gksu gufw &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Manage Firewall")</label>
@@ -365,7 +334,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/keyboard.png</input>
-        <action>$AS_USER "antixcckeyboard.sh" - $USER &</action>
+        <action>antixcckeyboard.sh &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Change Keyboard Layout")</label>
@@ -374,7 +343,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-wallpaper.png</input>
-        <action>$AS_ROOT antixccslim.sh</action>
+        <action>gksu antixccslim.sh</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Change Slim Background")</label>
@@ -383,7 +352,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/video-display.png</input>
-        <action>$AS_USER arandr - $USER&</action>
+        <action>gksu arandr &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set Screen Resolution")</label>
@@ -392,7 +361,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/computer.png</input>
-        <action>$ED_ROOT /etc/desktop-session/desktop-session.conf /etc/desktop-session/startup /etc/desktop-session/file_compare /etc/desktop-session/desktop-defaults.conf &</action>
+        <action>gksu $EDITOR /etc/desktop-session/desktop-session.conf /etc/desktop-session/startup /etc/desktop-session/file_compare /etc/desktop-session/desktop-defaults.conf &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Global desktop-session configuration")</label>
@@ -402,8 +371,17 @@ $edit_jwm
   <vbox>
     <hbox>
       <button>
+        <input file>$ICONS/gnome-session.png</input>
+        <action>gksu-properties &</action>
+      </button>
+      <text use-markup="true" width-chars="25">
+        <label>$(echo $"Edit Root Password Prompt")</label>
+      </text>
+    </hbox>
+    <hbox>
+      <button>
         <input file>$ICONS/gdm-setup.png</input>
-        <action>$AS_ROOT slim-login &</action>
+        <action>gksu slim-login &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set auto-login")</label>
@@ -412,7 +390,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/video-display.png</input>
-        <action>$AS_USER "set-screen-blank" - $USER&</action>
+        <action>set-screen-blank &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set Screen Blanking")</label>
@@ -421,7 +399,7 @@ $edit_jwm
     <hbox>
       <button>
         <input file>$ICONS/computer.png</input>
-        <action>$AS_USER "geany $home/.desktop-session/desktop-session.conf $home/.desktop-session/startup $home/.desktop-session/file_compare $home/.desktop-session/desktop-defaults.conf" - $USER &</action>
+        <action>$EDITOR ~/.desktop-session/desktop-session.conf ~/.desktop-session/startup ~/.desktop-session/file_compare ~/.desktop-session/desktop-defaults.conf &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"User desktop-session configuration")</label>
@@ -435,7 +413,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/gparted.png</input>
-        <action>$AS_ROOT gparted &</action>
+        <action>gksu gparted &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Partition a Drive")</label>
@@ -444,7 +422,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/drive-removable-media.png</input>
-        <action>$AS_ROOT mountbox &</action>
+        <action>mountbox &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Mount Connected Devices")</label>
@@ -453,7 +431,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/file-roller.png</input>
-        <action>$AS_ROOT luckybackup &</action>
+        <action>gksu luckybackup &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Backup Your System")</label>
@@ -464,7 +442,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/drive-removable-media-usb.png</input>
-        <action>$AS_ROOT antix2usb.py &</action>
+        <action>gksu antix2usb.py &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"antiX2usb")</label>
@@ -473,7 +451,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/drive-harddisk-system.png</input>
-        <action>$TERM_ROOT -e partimage &</action>
+        <action>desktop-defaults-run -t su -c partimage &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Image a Partition")</label>
@@ -482,7 +460,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-remote-desktop.png</input>
-        <action>$AS_ROOT grsync &</action>
+        <action>grsync &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Synchronize Directories")</label>
@@ -495,7 +473,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/computer.png</input>
-        <action>$AS_USER "hardinfo" - $USER &</action>
+        <action>hardinfo &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"System Information")</label>
@@ -504,7 +482,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/printer.png</input>
-        <action>$AS_ROOT system-config-printer &</action>
+        <action>system-config-printer &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Setup a Printer")</label>
@@ -513,7 +491,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/computer.png</input>
-        <action>$AS_USER "inxi-gui" - $USER &</action>
+        <action>inxi-gui &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"PC Information")</label>
@@ -522,7 +500,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/input-mouse.png</input>
-        <action>$AS_USER "antixccmouse.sh" - $USER &</action>
+        <action>antixccmouse.sh &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Configure Mouse")</label>
@@ -534,7 +512,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-sound.png</input>
-        <action>$AS_USER "$TERM -e speaker-test --channels 2 --test wav --nloops 3" - $USER &</action>
+        <action>urxvt -e speaker-test --channels 2 --test wav --nloops 3 &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Test Sound")</label>
@@ -543,7 +521,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-sound.png</input>
-        <action>$AS_USER "$TERM -e alsamixer" - $USER &</action>
+        <action>desktop-defaults-run -t alsamixer &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Adjust Mixer")</label>
@@ -552,7 +530,7 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-sound.png</input>
-        <action>$AS_USER "alsa-set-default-card" - $DEMO &</action>
+        <action>alsa-set-default-card &</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Set default sound card")</label>
