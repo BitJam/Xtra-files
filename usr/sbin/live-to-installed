@@ -61,16 +61,23 @@ main() {
     rm_file_skel  "Desktop/Install.desktop"
 
     rm_file       etc/udev/rules.d/90-fstab-automount.rules
+
+    cp_file       /usr/share/antiX/rc.local.install etc/rc.local
+    cp_file       /usr/share/antix-install/issue etc/issue
+    cp_file       /usr/share/slim/themes/antiX/slim-install.conf etc/slim.conf
+
+    cp_dir        /etc/init.d/debian etc/init.d
+    rm_dir        etc/init.d/debian
+
     idir_chroot   dpkg --purge $PURGE_PACKAGES
-    backup_file   etc/X11/xorg.conf .live
 
     clear_dir     media run tmp var/tmp var/log
 }
- 
+
 #----------------------------------------------------------------------
 # del_line <regex> <file-list>
 #
-# Delete all lines from <file-list> that match <regex> 
+# Delete all lines from <file-list> that match <regex>
 #----------------------------------------------------------------------
 del_line() {
     local regex=$1 file=$2
@@ -117,6 +124,32 @@ rm_file() {
     done
 }
 
+rm_dir() {
+    local dir
+    for dir; do
+        dir=$IDIR/${dir#/}
+        [ "$VERBOSE" ] || test -d "$dir" || continue
+        $PRETEND rm -rf "$dir"
+    done
+}
+
+cp_file() {
+    local src=$1 dest=${2:-$1}
+    dest=$IDIR/${dest#/}
+    local dir=$(dirname $dest)
+    [ "$VERBOSE" ] || test -e "$src" || return
+    test -d $dir || $PRETEND mkdir -p $dir
+    $PRETEND cp -af $src $dest
+}
+
+cp_dir() {
+    local src=$1 dest=${2:-$1}
+    dest=$IDIR/${dest#/}
+    [ "$VERBOSE" ] || test -d "$src" || return
+    test -d $dest || $PRETEND mkdir -p $dest
+    $PRETEND cp -af $src/* $dest/ 2>/dev/null
+}
+
 clear_dir() {
     local dir full
     for dir; do
@@ -133,7 +166,7 @@ idir_chroot() {
 skel_user_files() {
     local spec=$1
     wm_files "$IDIR/etc/skel/$spec"
-    for user in $(ls $IDIR/home); do
+    for user in $(ls $IDIR/home 2>/dev/null); do
         dir=$IDIR/home/$user
         test -d $dir || continue
         wm_files "$dir/$spec"
