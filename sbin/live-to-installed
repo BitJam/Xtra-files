@@ -2,6 +2,7 @@
 
 ME=${0##*/}
 
+PURGE_PACKAGES="live-init-antix"
 W_MANAGERS="fluxbox icewm jwm"
 PRETEND=
 
@@ -58,6 +59,12 @@ main() {
     del_line_skel "gksu antixsources.sh"     ".%s/menu"
     del_line_skel "antixsources.desktop"     $rox_pb
     rm_file_skel  "Desktop/Install.desktop"
+
+    rm_file       etc/udev/rules.d/90-fstab-automount.rules
+    idir_chroot   dpkg --purge $PURGE_PACKAGES
+    backup_file   etc/X11/xorg.conf .live
+
+    clear_dir     media run tmp var/tmp var/log
 }
  
 #----------------------------------------------------------------------
@@ -67,6 +74,7 @@ main() {
 #----------------------------------------------------------------------
 del_line() {
     local regex=$1 file=$2
+    # We are called by del_line_skel which already adds $IDIR
     [ -z "${file##/*}" ] || file=$IDIR/$file
     [ "$VERBOSE" ] || test -e "$file" || return
     $PRETEND sed -i "/$regex/d" "$file"
@@ -92,6 +100,34 @@ rm_file_skel() {
     done <<Rm_File_Skel
 $(skel_user_files "$spec")
 Rm_File_Skel
+}
+
+backup_file() {
+    local file=$IDIR/${1#/} ext=$2
+    [ "$VERBOSE" ] || test -e "$file" || return
+    $PRETEND mv -f "$file" "$file$ext"
+}
+
+rm_file() {
+    local file
+    for file; do
+        file=$IDIR/${file#/}
+        [ "$VERBOSE" ] || test -e "$file" || continue
+        $PRETEND rm -f "$file"
+    done
+}
+
+clear_dir() {
+    local dir full
+    for dir; do
+        dir=$IDIR/${dir#/}
+        [ "$VERBOSE" ] || test -d "$dir" || continue
+        $PRETEND find $dir -mindepth 1 -delete
+    done
+}
+
+idir_chroot() {
+    $PRETEND chroot $IDIR "$@"
 }
 
 skel_user_files() {
