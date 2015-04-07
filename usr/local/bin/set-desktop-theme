@@ -10,7 +10,7 @@
  LIGHT_FLUX_THEME="Radiant-antiX"
 LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
 
-ROX_DIR="./config/rox.sourceforge.net/ROX-Filer/"
+ROX_DIR=".config/rox.sourceforge.net/ROX-Filer"
 
 
 ME=${0##*/}
