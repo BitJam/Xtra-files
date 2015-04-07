@@ -2,12 +2,12 @@
 
        DARK_ICONS="Faenza-Cupertino-mini"
    DARK_GTK_THEME="MediterraneanGrayDark"
-  DARK_FLUX_THEME="antiX"
+  DARK_FLUX_THEME="usr/share/fluxbox/styles/antiX"
  DARK_ICEWM_THEME="icegil-remix/default.theme"
 
       LIGHT_ICONS="BRIT-ICONS"
   LIGHT_GTK_THEME="MediterraneanWhite"
- LIGHT_FLUX_THEME="Radiant-antiX"
+ LIGHT_FLUX_THEME="/usr/share/fluxbox/styles/Radiant-antiX"
 LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
 
 ROX_DIR=".config/rox.sourceforge.net/ROX-Filer"
@@ -128,8 +128,8 @@ replace_file() {
 
     local type=$(stat -c %F "$file" 2>/dev/null)
     case $type in
-        sym*) cmd="ln -sf" ;;
-           *) cmd="cp -af" ;;
+        sym*) cmd="ln -sf" ; new=$(basename $new) ;;
+           *) cmd="cp -af"                        ;;
     esac
 
     if [ "$PRETEND" -o "$VERBOSE" ]; then
