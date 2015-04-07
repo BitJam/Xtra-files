@@ -27,12 +27,12 @@ EDITOR="geany -i"
 Desktop=$"Desktop" System=$"System" Network=$"Network" Session=$"Session"
 Live=$"Live" Disks=$"Disks" Hardware=$"Hardware"
 
-[ -d $home/.fluxbox -a -e /usr/share/xsessions/fluxbox.desktop ] \
+[ -d $HOME/.fluxbox -a -e /usr/share/xsessions/fluxbox.desktop ] \
     && edit_fluxbox=$(cat <<Edit_Fluxbox
     <hbox>
       <button>
         <input file>$ICONS/desktop-effects.png</input>
-        <action>$EDITOR $home/.fluxbox/overlay $home/.fluxbox/keys $home/.fluxbox/init $home/.fluxbox/startup $home/.fluxbox/apps $home/.fluxbox/menu&</action>
+        <action>$EDITOR $HOME/.fluxbox/overlay $HOME/.fluxbox/keys $HOME/.fluxbox/init $HOME/.fluxbox/startup $HOME/.fluxbox/apps $HOME/.fluxbox/menu&</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit Fluxbox Settings")</label>
@@ -41,12 +41,12 @@ Live=$"Live" Disks=$"Disks" Hardware=$"Hardware"
 Edit_Fluxbox
 )
 
-[ -d $home/.icewm -a -e /usr/share/xsessions/IceWM.desktop ] \
+[ -d $HOME/.icewm -a -e /usr/share/xsessions/IceWM.desktop ] \
     && edit_icewm=$(cat <<Edit_Icewm
     <hbox>
       <button>
         <input file>$ICONS/desktop-effects.png</input>
-        <action>$EDITOR $home/.icewm/winoptions $home/.icewm/preferences $home/.icewm/keys $home/.icewm/startup $home/.icewm/toolbar $home/.icewm/menu&</action>
+        <action>$EDITOR $HOME/.icewm/winoptions $HOME/.icewm/preferences $HOME/.icewm/keys $HOME/.icewm/startup $HOME/.icewm/toolbar $HOME/.icewm/menu&</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit IceWM Settings")</label>
@@ -55,12 +55,12 @@ Edit_Fluxbox
 Edit_Icewm
 )
 
-[ -d $home/.jwm -a -e /usr/share/xsessions/Jwm.desktop ] \
+[ -d $HOME/.jwm -a -e /usr/share/xsessions/Jwm.desktop ] \
     && edit_jwm=$(cat <<Edit_Jwm
     <hbox>
       <button>
         <input file>$ICONS/desktop-effects.png</input>
-        <action>$EDITOR $home/.jwm/preferences $home/.jwm/keys $home/.jwm/tray $home/.jwm/startup $home/.jwmrc $home/.jwm/menu</action>
+        <action>$EDITOR $HOME/.jwm/preferences $HOME/.jwm/keys $HOME/.jwm/tray $HOME/.jwm/startup $HOME/.jwmrc $HOME/.jwm/menu</action>
       </button>
       <text use-markup="true" width-chars="25">
         <label>$(echo $"Edit jwm Settings")</label>
