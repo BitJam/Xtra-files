@@ -10,10 +10,14 @@
  LIGHT_FLUX_THEME="Radiant-antiX"
 LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
 
+ROX_DIR="./config/rox.sourceforge.net/ROX-Filer/"
+
 
 ME=${0##*/}
 DIR=$HOME
-PRETEND=echo
+PRETEND=
+VERBOSE=
+NO_RESTART=
 
 usage() {
     local ret=${1:-0}
@@ -23,9 +27,11 @@ Usage: $ME [options] <light|dark>
 Set the desktop theme to either light or dark.
 
 Options:
-    -d --dir=<dir>  Modify files under <dir> instead of HOME
-    -h --help       Show this help
-    -p --pretend    Show the changes instead of doing anything
+    -d --dir=<dir>   Modify files under <dir> instead of HOME
+    -h --help        Show this help
+    -n --no-restart  Don't restart the window manager
+    -p --pretend     Show the changes instead of doing theme
+    -v --verbose     Show the changes and do them
 Usage
 
     exit $ret
@@ -55,8 +61,9 @@ main() {
         case $arg in
              -dir|d) DIR=$val                        ;;
             -help|h) usage                           ;;
+      -no-restart|n) NO_RESTART=true                 ;;
          -pretend|p) PRETEND=echo                    ;;
-         -dir=*|d=*) DIR=$val                        ;;
+         -verbose|v) VERBOSE=true                    ;;
                   *) error "Unknown argument: -$arg" ;;
         esac
     done
@@ -70,24 +77,28 @@ main() {
                 FLUX_THEME=$DARK_FLUX_THEME
                 ICEWM_THEME=$DARK_ICEWM_THEME ;;
 
-        light)  ICONS=$DARK_ICONS
-                GTK_THEME=$DARK_GTK_THEME
-                FLUX_THEME=$DARK_FLUX_THEME
-                ICEWM_THEME=$DARK_ICEWM_THEME ;;
+        light)  ICONS=$LIGHT_ICONS
+                GTK_THEME=$LIGHT_GTK_THEME
+                FLUX_THEME=$LIGHT_FLUX_THEME
+                ICEWM_THEME=$LIGHT_ICEWM_THEME ;;
 
             *)  fatal "Unrecognized theme: $theme" ;;
     esac
 
     replace_line "s|^\s*(Theme=\")[^\"]*(\").*|\1$ICEWM_THEME\2|"                   .icewm/theme
     replace_line "s|^\s*(session.styleFile:\s+).*|\1$FLUX_THEME|"                   .fluxbox/init
-    replace_line "s|^(\s*<Option name=\"icon_theme\">)[^<]*(</Option>)|\1$ICONS\2|" rox/Options
+    replace_line "s|^(\s*<Option name=\"icon_theme\">)[^<]*(</Option>)|\1$ICONS\2|" $ROX_DIR/Options
     replace_line "s|^(\s*gtk-theme-name=\")[^\"]*(\")|\1$GTK_THEME\2|"              .gtkrc-2.0
     replace_line "s|^(\s*gtk-icon-theme-name=\")[^\"]*(\")|\1$ICONS\2|"             .gtkrc-2.0
-    replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|"               settings.ini
-    replace_line "s|^\s*(gtk-icon-theme-name=)(\"?).*\2\s*|\1\2$ICONS\2|"           settings.ini
+    replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|"               .config/gtk-3.0/settings.ini
+    replace_line "s|^\s*(gtk-icon-theme-name=)(\"?).*\2\s*|\1\2$ICONS\2|"           .config/gtk-3.0/settings.ini
 
     replace_file $theme .dillo/style.css
     replace_file $theme .jwm/theme
+
+    [ "$PRETEND" ] && return
+
+    restart_desktop
 }
 
 replace_line() {
@@ -96,12 +107,13 @@ replace_line() {
     [ -z "${file##/*}" ] || file=$DIR/$file
     test -e "$file" || return
 
-    if [ "$PRETEND" ]; then
+    if [ "$PRETEND" -o "$VERBOSE" ]; then
         echo -en "file $file:\n  "
         sed -n -r "$regex"p "$file"
-    else
-        echo sed -i -r "$regex" "$file"
     fi
+
+    [ "$PRETEND" ] && return
+    sed -i -r "$regex" "$file"
 }
 
 replace_file() {
@@ -116,9 +128,28 @@ replace_file() {
 
     local type=$(stat -c %F "$file" 2>/dev/null)
     case $type in
-        sym*) $PRETEND ln -sf $new $file  ;;
-           *) $PRETEND cp -af $new $file  ;;
+        sym*) cmd="ln -sf" ;;
+           *) cmd="cp -af" ;;
     esac
+
+    if [ "$PRETEND" -o "$VERBOSE" ]; then
+        echo $cmd $new $file
+    fi
+
+    [ "$PRETEND" ] && return
+    $cmd $new $file
+}
+
+restart_desktop() {
+    local restart=/usr/local/lib/desktop-session/desktop-session-restart
+
+    [ "$NO_RESTART"    ] && return
+    [ "$DISPLAY"       ] || return
+    [ "$DIR" = "$HOME" ] || return
+    [ $UID -eq 0       ] && return
+    [ -x $restart      ] || return
+
+    $restart
 }
 
 warn() {
@@ -132,3 +163,5 @@ fatal() {
 
 
 main "$@"
+
+exit 0
