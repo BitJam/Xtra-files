@@ -71,7 +71,10 @@ main() {
 
     idir_chroot   dpkg --purge $PURGE_PACKAGES
 
-    clear_dir     media run tmp var/tmp var/log
+    clear_dir     media run tmp var/tmp
+    rm_dir        var/log/live
+    clear_files   var/log
+
 }
 
 #----------------------------------------------------------------------
@@ -156,6 +159,15 @@ clear_dir() {
         dir=$IDIR/${dir#/}
         [ "$VERBOSE" ] || test -d "$dir" || continue
         $PRETEND find $dir -mindepth 1 -delete
+    done
+}
+
+clear_files() {
+    local dir full
+    for dir; do
+        dir=$IDIR/${dir#/}
+        [ "$VERBOSE" ] || test -d "$dir" || continue
+        $PRETEND find $dir -xtype f -delete
     done
 }
 
