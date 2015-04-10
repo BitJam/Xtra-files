@@ -116,6 +116,7 @@ read_args() {
              h=*)   HORIZ=$value                      ;;
              v=*)    VERT=$value                      ;;
             safe)   RESOLUTION=auto     ; DRIVER=vesa ;;
+         default)   RESOLUTION=auto     ; DRIVER=vesa ;;
             auto)   RESOLUTION=auto                   ;;
 
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
@@ -156,15 +157,15 @@ modes_section() {
 
     case $resolution in
          1024x768) add_modes=' "800x600"'                                                           ;;
-        1280x1024) add_modes=' "1024x768"  "800x600"'                                               ;;
+        1280x1024) add_modes=' "1024x768"  "1333x768"  "800x600"'                                   ;;
          1280x800) add_modes=' "1280x768"  "1024x768"  "800x600"'                                   ;;
         1920x1200) add_modes=' "1680x1050" "1440x900"  "1280x1024" "1280x800" "1024x768" "800x600"' ;;
         1680x1050) add_modes=' "1440x900"  "1280x1024" "1280x800"  "1024x768" "800x600"'            ;;
         1600x1200) add_modes=' "1450x1050" "1280x1024" "1024x768"  "800x600"'                       ;;
         1450x1050) add_modes=' "1280x1024" "1024x768"  "800x600"'                                   ;;
          1440x900) add_modes=' "1280x1024" "1280x800"  "1024x768"  "800x600"'                       ;;
-         1280x768) add_modes=' "1280x800"  "1333x768" "1024x768"  "800x600"'                        ;;
-                *) add_modes=' "1280x1024" "1333x768" "1024x768"  "800x600"'                        ;;
+         1280x768) add_modes=' "1280x800"  "1333x768"  "1024x768"  "800x600"'                       ;;
+                *) add_modes=' "1280x1024" "1333x768"  "1024x768"  "800x600"'                       ;;
     esac
 
     add_modes=$(echo "$add_modes" | sed -r -e "s/ \"$resolution\"//" -e "s/\s+/ /g")
