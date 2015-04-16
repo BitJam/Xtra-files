@@ -1,0 +1,33 @@
+#!/bin/bash
+
+ME=$(basename $0)
+
+splash_ctl=fbcondecor_ctl.static
+
+case $# in
+    1 ) term=$(fgconsole); theme="$1";;
+    2 ) term="$1"; theme="$2";;
+
+    * ) echo "usage: splash_term [1-6] theme"
+        echo "Set the fbsplash theme on specified vconsole or the current one."
+        echo
+        echo "themes:"
+        /bin/ls /etc/splash
+        exit ;;
+esac
+
+which $splash_ctl &>/dev/null || exit
+
+if [ ! -d /etc/splash/$theme ]; then
+    echo "Theme \"$theme\" not found"
+    echo
+    echo "Valid themes:"
+    /bin/ls /etc/splash
+    exit 1
+fi
+
+echo "$ME $term -> $theme"
+
+$splash_ctl --tty="${term}" -t "${theme}" -c setcfg 2>/dev/null
+$splash_ctl --tty="${term}" -t "${theme}" -c setpic 2>/dev/null
+$splash_ctl --tty="${term}" -c on
