@@ -1,9 +1,0 @@
-#!/bin/bash
-volumeicon & 
-
-fbxkb &
-
-space-bar-icon &
-
-(sleep 5 && toram-eject) &
-
