@@ -5,13 +5,6 @@
 # If our name is "buildxconfig" then we mimic the behavior of the older version.
 # Otherwise we behave better and take all of our input via the command line.
 #
-# If boot parameter "xorgconf" is given or an "xres=xxx" is given then we set
-# the resolution.
-#
-# If an "xdrvr=xxx" is given then we set the video driver.
-#
-# If both conditions are met then we set both
-#
 # Whenever we set the resolution then we also add other modes as fallbacks.
 
 
@@ -38,9 +31,18 @@ YELLOW=$(printf "\e[1;33m")
 usage() {
     local ret=${1:-0}
     cat <<Usage
-Usage: $ME [options] [<driver>,<resolution>,auto,safe,vbox]
+Usage: $ME [options] [<driver>,<resolution>|auto|default|safe|vbox]
 
-Create an xorg.conf file based on the arguments given on the command line.
+Create an xorg.conf file based on the arguments given on the command
+line.  We expect one command line parameter with possibly multiple
+xorg options separated by spaces.  Example:
+
+    $ME fbdev,1600x900
+
+Later parameters override earlier ones so the follow would use the
+vesa driver:
+
+    $ME fbdev,vesa
 
 Options:
     -f --force          Force creation even if driver specfied is not found
@@ -53,6 +55,7 @@ A comma delimited list of options.
 
     safe              Set driver to "vesa" and set default resolutions
     auto              Set default resolutions
+    default           Set vesa driver and default resolutions
     HHHHxWWWW         Set the resolution
     h=xxxx            Set horizontal sync frequency range
     v=yyyy            Set vertical refresh frequency range
@@ -116,6 +119,7 @@ read_args() {
              h=*)   HORIZ=$value                      ;;
              v=*)    VERT=$value                      ;;
             safe)   RESOLUTION=auto     ; DRIVER=vesa ;;
+         default)   RESOLUTION=auto     ; DRIVER=vesa ;;
             auto)   RESOLUTION=auto                   ;;
 
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
