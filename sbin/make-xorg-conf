@@ -39,8 +39,10 @@ xorg options separated by spaces.  Example:
 
     $ME fbdev,1600x900
 
-Later parameters override earlier ones so the follow would use the
-vesa driver:
+Later parameters override earlier ones if what they do overlaps.
+There are two exceptions.  The "default" parameter is always the
+lowest priority and then "safe" is the next lowest regardless of
+the order.
 
     $ME fbdev,vesa
 
@@ -111,16 +113,26 @@ main() {
 
 read_args() {
     local param value
+
+    # Lowest priority gets evaluted first.
+    # Yes, these both do the same thing (for now).
+    case ,$1, in
+         *,default,*)  RESOLUTION=auto ; DRIVER=vesa ;;
+    esac
+
+    case ,$1, in
+            *,safe,*)  RESOLUTION=auto ; DRIVER=vesa ;;
+    esac
+
     for param in ${1//,/ };  do
         value=${param#*=}
 
         case $param in
-            vbox)   eval "$VBOX_OPTS"                 ;;
-             h=*)   HORIZ=$value                      ;;
-             v=*)    VERT=$value                      ;;
-            safe)   RESOLUTION=auto     ; DRIVER=vesa ;;
-         default)   RESOLUTION=auto     ; DRIVER=vesa ;;
-            auto)   RESOLUTION=auto                   ;;
+            safe|default)                     ;;
+                    vbox) eval "$VBOX_OPTS"   ;;
+                     h=*)      HORIZ=$value   ;;
+                     v=*)       VERT=$value   ;;
+                    auto) RESOLUTION=auto     ;;
 
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
                         RESOLUTION=$param
