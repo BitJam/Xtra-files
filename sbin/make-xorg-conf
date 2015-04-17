@@ -69,7 +69,7 @@ Use --force to create an xorg.conf that specifies a driver that is not
 on the host system.
 
 Available drivers:
-$(echo "$VALID_DRIVERS" | column -x -c 70)
+$(echo "$VALID_DRIVERS" | column -c 70)
 
 Usage
     exit $ret
@@ -250,7 +250,7 @@ driver_error() {
 $WHITE$ME$YELLOW Error:$RED Unrecognized (uninstalled?) video driver:$WHITE $driver
 $RED
 Available drivers:
-$(echo "$VALID_DRIVERS" | column -x -c 70)
+$(echo "$VALID_DRIVERS" | column -c 70)
 
 Use --force to force use of an unrecognized driver$NC
 Driver_Error
