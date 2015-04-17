@@ -1,0 +1,1 @@
+KERNEL=="fb[0-9]", ACTION!="remove", RUN+="/sbin/splash-term --auto"
