@@ -163,10 +163,15 @@ read_cmdline() {
 }
 
 modes_section() {
-    local res_param=$1
-    [ "$res_param" ] || return
+    local param=$1
+    [ "$param" ] || return
     local res_regex="[0-9]\+x[0-9]\+"
-    local resolution=$(echo "$res_param" | grep -o "$res_regex")
+
+    case $param in
+        safe|default) param=$(good_fb_res $param)
+    esac
+
+    local resolution=$(echo "$param" | grep -o "$res_regex")
 
     local modes add_modes
 
@@ -242,6 +247,34 @@ Section "Screen"
 $(modes_section $mode)
 EndSection
 Xorg_Conf
+}
+
+good_fb_res() {
+    local param=${1:-unknown} fb_res
+    local file=/sys/class/graphics/fb0/virtual_size
+
+    if ! test -r $file; then
+        echo $param
+        return
+    fi
+    read fb_res 2>/dev/null <$file
+    fb_res=${fb_res/,/x}
+
+    if ! echo $fb_res | grep -q "^[0-9]\+x[0-9]\+$"; then
+        echo $param
+        return
+    fi
+    case $fb_res in
+        xx1280x1024|1024x768|800x600) echo $param ; return ;;
+    esac
+
+    local width=${fb_res%%x*}
+    if [ $width -lt 1024 ]; then
+        echo $param
+        return
+    fi
+
+    echo $fb_res
 }
 
 driver_error() {
