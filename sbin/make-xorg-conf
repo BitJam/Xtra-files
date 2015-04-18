@@ -117,11 +117,11 @@ read_args() {
     # Lowest priority gets evaluted first.
     # Yes, these both do the same thing (for now).
     case ,$1, in
-         *,default,*)  RESOLUTION=auto ; DRIVER=vesa ;;
+         *,default,*)  DRIVER=vesa  ; RESOLUTION=default ;;
     esac
 
     case ,$1, in
-            *,safe,*)  RESOLUTION=auto ; DRIVER=vesa ;;
+            *,safe,*)  DRIVER=vesa  ; RESOLUTION=safe    ;;
     esac
 
     for param in ${1//,/ };  do
