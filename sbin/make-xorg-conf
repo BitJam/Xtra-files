@@ -153,7 +153,7 @@ read_cmdline() {
     for param ; do
         value=${param#*=}
         case $param in
-                 xres=safe)  DRIVER=vesa       ;  RESOLUTION=auto ;;
+                 xres=safe)  DRIVER=vesa       ;  RESOLUTION=safe ;;
             xdrvr=*|drvr=*)  DRIVER=$value     ;  DO_XORG=true    ;;
               xres=*|res=*)  RESOLUTION=$value ;  DO_XORG=true    ;;
                   xorgconf)  DO_XORG=true                         ;;
