@@ -265,7 +265,7 @@ good_fb_res() {
         return
     fi
     case $fb_res in
-        xx1280x1024|1024x768|800x600) echo $param ; return ;;
+        1280x1024|1024x768|800x600) echo $param ; return ;;
     esac
 
     local width=${fb_res%%x*}
