@@ -251,31 +251,36 @@ Xorg_Conf
 }
 
 good_fb_res() {
-    local param=${1:-unknown} fb_res
-    local file=/sys/class/graphics/fb0/virtual_size
+    local param=${1:-unknown} fb_size fb_name x
+    local sys_dir=/sys/class/graphics/fb0
+    local size_file=$sys_dir/virtual_size
+    local name_file=$sys_dir/name
 
-    if ! test -r $file; then
-        echo $param
+    read fb_size 2>/dev/null <$size_file
+    read fb_name 2>/dev/null <$name_file
+
+    # We use the loop for control flow
+    for x in 1; do
+        case $fb_name in
+          "VESA VGA")       ;;
+                   *) break ;;
+        esac
+
+        local fb_res=${fb_size/,/x}
+
+        echo $fb_res | grep -q "^[0-9]\+x[0-9]\+$" || break
+
+        case $fb_res in
+            1024x768|800x600) break ;;
+        esac
+
+        local width=${fb_res%%x*}
+        [ $width -lt 1024 ] && break
+
+        echo $fb_res
         return
-    fi
-    read fb_res 2>/dev/null <$file
-    fb_res=${fb_res/,/x}
-
-    if ! echo $fb_res | grep -q "^[0-9]\+x[0-9]\+$"; then
-        echo $param
-        return
-    fi
-    case $fb_res in
-        1280x1024|1024x768|800x600) echo $param ; return ;;
-    esac
-
-    local width=${fb_res%%x*}
-    if [ $width -lt 1024 ]; then
-        echo $param
-        return
-    fi
-
-    echo $fb_res
+    done
+    echo $param
 }
 
 driver_error() {
