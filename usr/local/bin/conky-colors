@@ -1,0 +1,143 @@
+#!/bin/bash
+
+
+ME=${0##*/}
+
+FILE=$HOME/.conkyrc
+
+WHITE_THEME="
+COLOR_1=white
+COLOR_2=ffffff
+COLOR_3=ffffff
+COLOR_4=yellow
+COLOR_8=e0e0e0
+COLOR_9=fefefe
+GRAPH_C=fefefe"
+
+LIGHT_THEME="
+COLOR_1=ffffff
+COLOR_2=ffffff
+COLOR_3=ffffff
+COLOR_4=yellow
+COLOR_8=77ccff
+COLOR_9=5599cc
+GRAPH_C=5599cc"
+
+DARK_THEME="
+COLOR_1=505050
+COLOR_2=505050
+COLOR_3=505050
+COLOR_4=505050
+COLOR_8=808080
+COLOR_9=103040
+GRAPH_C=103040"
+
+GRAPH_COLORS="fefefe|5599cc|103040"
+
+SED_ARG=-i
+SUBST_SUFFIX=
+QUIET=
+
+usage() {
+    local ret=${1:-0}
+    cat <<Usage
+Usage: $ME [theme]
+
+Change the colors in the ~/.conkyrc file.  If no theme is given then
+we guess the current theme and cycle to the next theme.  The current
+themes are:
+
+    white    light    dark
+
+Options:
+    -f --file=<file>   Makes change to <file> instead of .conkyrc
+    -h --help          Show this help
+    -p --pretend       Show changes but don't do anything
+    -q --quiet         Only print error messages
+Usage
+
+    exit $ret
+}
+
+main() {
+
+    local arg val="unknown"
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        arg=${1#-}
+        shift
+
+        case $arg in
+            -file|[f])
+                [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
+                val=$1
+                [ -n "$val" -a -z "${val##-*}" ] \
+                    && fatal "Suspicious argument after -$arg: $val"
+                shift           ;;
+
+            *=*) val=${arg#*=} ;;
+            *)   val="unknown" ;;
+        esac
+
+        case $arg in
+               -file|f) FILE=$val                       ;;
+               -help|h) usage                           ;;
+                     *) error "Unknown argument: -$arg" ;;
+            -pretend|p) SUBST_SUFFIX=p ; SED_ARG=-n     ;;
+              -quiet|q) QUIET=true                      ;;
+        esac
+    done
+
+    [ $# -gt 1 ] && fatal "Expected at most one command line argument"
+    local theme=${1:-$(guess_theme "$FILE")}
+
+    test -e "$FILE" || fatal "Could not find file: $FILE"
+    test -r "$FILE" || fatal "Can not read file: $FILE"
+    test -w "$FILE" || fatal "Can not write to file: $FILE"
+
+    case $theme in
+        white) eval "$WHITE_THEME" ;;
+        light) eval "$LIGHT_THEME" ;;
+         dark) eval "$DARK_THEME" ;;
+            *) fatal "Unrecognized theme: $theme" ;;
+    esac
+
+    sed  $SED_ARG -r \
+        -e "s/^(default_color ).*/\1$COLOR_1/$SUBST_SUFFIX" \
+        -e "s/^(color2 ).*/\1$COLOR_2/$SUBST_SUFFIX" \
+        -e "s/^(color3 ).*/\1$COLOR_3/$SUBST_SUFFIX" \
+        -e "s/^(color4 ).*/\1$COLOR_4/$SUBST_SUFFIX" \
+        -e "s/^(color8 ).*/\1$COLOR_8/$SUBST_SUFFIX" \
+        -e "s/^(color9 ).*/\1$COLOR_9/$SUBST_SUFFIX" \
+        -e "/graph/ s/$GRAPH_COLORS/$GRAPH_C/g$SUBST_SUFFIX" \
+        "$FILE"
+
+    qsay "Set theme to: $theme"
+}
+
+warn() {
+    echo "$ME warning: $*" >&2
+}
+
+fatal() {
+    echo "$ME Error: $*" >&2
+    exit 3
+}
+
+qsay() {
+    [ "$QUIET" ] && return
+    echo "$*"
+}
+
+guess_theme() {
+    local file=$1
+    old=$(sed -n -r "s/^default_color (\w+)/\1/p" "$file")
+    case $old in
+         white) echo light    ;;
+        ffffff) echo dark     ;;
+        505050) echo white    ;;
+             *) echo white    ;;
+    esac
+}
+main "$@"
+
+exit 0
