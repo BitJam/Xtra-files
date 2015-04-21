@@ -101,9 +101,6 @@ COLOR_8=a000a0
 COLOR_9=000000
 GRAPH_C=900090"
 
-
-GRAPH_COLORS=$(sed -n -r 's/^GRAPH_C=(\w+).*/\1/p' $0 | tr '\n' '|' | sed 's/|$//')
-
 SED_ARG=-i
 SUBST_SUFFIX=
 QUIET=
@@ -201,7 +198,7 @@ main() {
         -e "s/^(color4 ).*/\1$COLOR_4/$SUBST_SUFFIX" \
         -e "s/^(color8 ).*/\1$COLOR_8/$SUBST_SUFFIX" \
         -e "s/^(color9 ).*/\1$COLOR_9/$SUBST_SUFFIX" \
-        -e "/graph/ s/$GRAPH_COLORS/$GRAPH_C/g$SUBST_SUFFIX" \
+        -e "/^[$]\{.*\{\w+graph / s/ [0-9a-fA-F]{6}\>/ $GRAPH_C/g$SUBST_SUFFIX" \
         "$FILE"
 
     qsay "Set theme to: $cmd_theme"
