@@ -7,6 +7,8 @@
 #
 # Whenever we set the resolution then we also add other modes as fallbacks.
 
+SAFE_RESOLUTION="1024x768"
+FALLBACK_RESOLUTION="1280x1024"
 
 ME=${0##*/}
 case $ME in
@@ -132,7 +134,7 @@ read_args() {
                     vbox) eval "$VBOX_OPTS"   ;;
                      h=*)      HORIZ=$value   ;;
                      v=*)       VERT=$value   ;;
-                    auto) RESOLUTION=auto     ;;
+                    auto) RESOLUTION=default  ;;
 
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
                         RESOLUTION=$param
@@ -161,17 +163,26 @@ read_cmdline() {
           esac
     done
 }
-
+#-------------------------------------------------------------------------------
+# Create a mode (resolution) section based on the parameter based.  If there
+# is no parameter then we don't create this section.  A "safe" parameter
+# creates a resolution of $SAFE_RESOLUTION.  A "default" parameter will try to
+# use the resolution of the framebuffer if it is bigger than 1024x768.  If the
+# parameter looks like a resolution then it is set as the default.  Anything
+# else sets the resolution to $FALLBACK_RESOLUTION.
+#-------------------------------------------------------------------------------
 modes_section() {
     local param=$1
     [ "$param" ] || return
     local res_regex="[0-9]\+x[0-9]\+"
 
     case $param in
-        safe|default) param=$(good_fb_res $param)
+           safe) param=$SAFE_RESOLUTION       ;;
+        default) param=$(good_fb_res $param)  ;;
     esac
 
     local resolution=$(echo "$param" | grep -o "$res_regex")
+    : ${resolution:=$FALLBACK_RESOLUTION}
 
     local modes add_modes
 
