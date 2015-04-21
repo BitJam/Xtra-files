@@ -1,11 +1,10 @@
 #!/bin/bash
 
-
 ME=${0##*/}
 
 FILE=$HOME/.conkyrc
 
-WHITE_THEME="
+white_THEME="
 COLOR_1=white
 COLOR_2=ffffff
 COLOR_3=ffffff
@@ -14,7 +13,7 @@ COLOR_8=e0e0e0
 COLOR_9=fefefe
 GRAPH_C=fefefe"
 
-LIGHT_THEME="
+light_THEME="
 COLOR_1=ffffff
 COLOR_2=ffffff
 COLOR_3=ffffff
@@ -23,7 +22,41 @@ COLOR_8=77ccff
 COLOR_9=5599cc
 GRAPH_C=5599cc"
 
-DARK_THEME="
+light_grey_THEME="
+COLOR_1=808080
+COLOR_2=808080
+COLOR_3=white
+COLOR_8=white
+GRAPH_C=fffffe"
+
+light_red_THEME="
+COLOR_1=ffffff
+COLOR_2=ffffff
+COLOR_3=ffffff
+COLOR_4=yellow
+COLOR_8=993333
+COLOR_9=998888
+GRAPH_C=993333"
+
+light_blue_THEME="
+COLOR_1=ffffff
+COLOR_2=ffffff
+COLOR_3=ffffff
+COLOR_4=yellow
+COLOR_8=6666ff
+COLOR_9=yellow
+GRAPH_C=5555ff"
+
+light_green_THEME="
+COLOR_1=ffffff
+COLOR_2=ffffff
+COLOR_3=ffffff
+COLOR_4=yellow
+COLOR_8=88ff88
+COLOR_9=yellow
+GRAPH_C=55ff55"
+
+dark_THEME="
 COLOR_1=505050
 COLOR_2=505050
 COLOR_3=505050
@@ -32,7 +65,44 @@ COLOR_8=808080
 COLOR_9=103040
 GRAPH_C=103040"
 
-GRAPH_COLORS="fefefe|5599cc|103040"
+darker_blue_THEME="
+COLOR_1=505050
+COLOR_2=505050
+COLOR_3=0000ff
+COLOR_4=505050
+COLOR_8=0000ff
+COLOR_9=0000ff
+GRAPH_C=0000ff"
+
+dark_blue_THEME="
+COLOR_1=0000dd
+COLOR_2=505050
+COLOR_3=0000ff
+COLOR_4=505050
+COLOR_8=000000
+COLOR_9=000000
+GRAPH_C=0000ff"
+
+dark_red_THEME="
+COLOR_1=dd0000
+COLOR_2=505050
+COLOR_3=a00000
+COLOR_4=505050
+COLOR_8=dd0000
+COLOR_9=000000
+GRAPH_C=ff0000"
+
+dark_purple_THEME="
+COLOR_1=800080
+COLOR_2=505050
+COLOR_3=a000a0
+COLOR_4=505050
+COLOR_8=a000a0
+COLOR_9=000000
+GRAPH_C=900090"
+
+
+GRAPH_COLORS=$(sed -n -r 's/^GRAPH_C=(\w+).*/\1/p' $0 | tr '\n' '|' | sed 's/|$//')
 
 SED_ARG=-i
 SUBST_SUFFIX=
@@ -40,14 +110,16 @@ QUIET=
 
 usage() {
     local ret=${1:-0}
+    local width=$(stty size 2>/dev/null | cut -d" " -f2)
+    : ${width:=70}
     cat <<Usage
-Usage: $ME [theme]
+Usage: $ME [<theme>|random|cycle]
 
-Change the colors in the ~/.conkyrc file.  If no theme is given then
-we guess the current theme and cycle to the next theme.  The current
-themes are:
+Change the colors in the ~/.conkyrc file. The "random" theme will cause
+a theme to be selected at random.  The "cycle" theme will select the
+next theme in a fixed cycle.  The current themes are:
 
-    white    light    dark
+$(list_themes | column -c 68 | sed 's/^/  /')
 
 Options:
     -f --file=<file>   Makes change to <file> instead of .conkyrc
@@ -81,27 +153,48 @@ main() {
         case $arg in
                -file|f) FILE=$val                       ;;
                -help|h) usage                           ;;
-                     *) error "Unknown argument: -$arg" ;;
             -pretend|p) SUBST_SUFFIX=p ; SED_ARG=-n     ;;
               -quiet|q) QUIET=true                      ;;
+                     *) fatal "Unknown argument: -$arg" ;;
         esac
     done
 
+    [ $# -lt 1 ] && usage
     [ $# -gt 1 ] && fatal "Expected at most one command line argument"
-    local theme=${1:-$(guess_theme "$FILE")}
 
     test -e "$FILE" || fatal "Could not find file: $FILE"
     test -r "$FILE" || fatal "Can not read file: $FILE"
     test -w "$FILE" || fatal "Can not write to file: $FILE"
 
-    case $theme in
-        white) eval "$WHITE_THEME" ;;
-        light) eval "$LIGHT_THEME" ;;
-         dark) eval "$DARK_THEME" ;;
-            *) fatal "Unrecognized theme: $theme" ;;
+    local cmd_theme=$1
+
+    case $cmd_theme in
+        random) cmd_theme=$(list_themes $FILE | shuf | head -n1) ;;
+         cycle) local old_theme=$(guess_old_theme)
+                qsay "old theme: $old_theme"
+                cmd_theme=$(new_theme $old_theme) ;;
     esac
 
+    #case $cmd_theme in
+    #    light-*) eval "$light_THEME" ;;
+    #esac
+
+    theme=${cmd_theme//-/_}
+
+    eval local theme_var=${theme}_THEME
+    #echo $theme_var
+    #eval echo \$$theme_var
+    eval local vars=\$$theme_var
+    #echo $vars
+
+    [ "$vars" ] || fatal "Unrecognized theme: $cmd_theme"
+    eval "$vars"
+
+    [ "$PRETEND" ] || egrep -q "^#\s+Color-theme: " "$FILE" || \
+        sed -i "1i# Color-theme: $theme" "$FILE"
+
     sed  $SED_ARG -r \
+        -e "s/^(#\s+Color-theme: ).*/\1$cmd_theme/$SUBST_SUFFIX" \
         -e "s/^(default_color ).*/\1$COLOR_1/$SUBST_SUFFIX" \
         -e "s/^(color2 ).*/\1$COLOR_2/$SUBST_SUFFIX" \
         -e "s/^(color3 ).*/\1$COLOR_3/$SUBST_SUFFIX" \
@@ -111,7 +204,7 @@ main() {
         -e "/graph/ s/$GRAPH_COLORS/$GRAPH_C/g$SUBST_SUFFIX" \
         "$FILE"
 
-    qsay "Set theme to: $theme"
+    qsay "Set theme to: $cmd_theme"
 }
 
 warn() {
@@ -128,16 +221,34 @@ qsay() {
     echo "$*"
 }
 
-guess_theme() {
+guess_old_theme() {
     local file=$1
-    old=$(sed -n -r "s/^default_color (\w+)/\1/p" "$file")
+    sed -r -n 's/^#\s+Color-theme: ([A-Za-z0-9-]+).*/\1/p' "$FILE"
+}
+
+new_theme() {
+    local old=$1
+   
     case $old in
-         white) echo light    ;;
-        ffffff) echo dark     ;;
-        505050) echo white    ;;
-             *) echo white    ;;
+          white) echo light-grey    ;;
+     light-grey) echo light         ;;
+          light) echo light-blue    ;;
+     light-blue) echo light-green   ;;
+    light-green) echo light-red     ;;
+      light-red) echo dark          ;;
+           dark) echo darker-blue   ;;
+    darker-blue) echo dark-blue     ;;
+      dark-blue) echo dark-purple   ;;
+    dark-purple) echo dark-red      ;;
+       dark-red) echo white         ;;
+              *) echo white         ;;
     esac
 }
+
+list_themes() {
+    sed -n -r "s/^([a-z_0-9]+)_THEME=.*/\1/p" $0 | tr '_' '-' | sort
+}
+
 main "$@"
 
 exit 0
