@@ -110,11 +110,15 @@ usage() {
     local width=$(stty size 2>/dev/null | cut -d" " -f2)
     : ${width:=70}
     cat <<Usage
-Usage: $ME [<theme>|random|cycle]
+Usage: $ME [<theme>|cycle|random|toggle]
 
-Change the colors in the ~/.conkyrc file. The "random" theme will cause
-a theme to be selected at random.  The "cycle" theme will select the
-next theme in a fixed cycle.  The current themes are:
+Change the colors in the ~/.conkyrc.  Meta-themes:
+
+    cycle      Cycle through all light or all dark themes
+    random     Pick a theme at random
+    toggle     Toggle between light themes and dark themes
+
+The current themes are:
 
 $(list_themes | column -c 68 | sed 's/^/  /')
 
@@ -166,10 +170,13 @@ main() {
     local cmd_theme=$1
 
     case $cmd_theme in
-        random) cmd_theme=$(list_themes $FILE | shuf | head -n1) ;;
+        toggle) local old_theme=$(guess_old_theme)
+                qsay "old theme: $old_theme"
+                cmd_theme=$(toggle_theme $old_theme)             ;;
          cycle) local old_theme=$(guess_old_theme)
                 qsay "old theme: $old_theme"
-                cmd_theme=$(new_theme $old_theme) ;;
+                cmd_theme=$(cycle_theme $old_theme)              ;;
+        random) cmd_theme=$(list_themes $FILE | shuf | head -n1) ;;
     esac
 
     #case $cmd_theme in
@@ -220,24 +227,44 @@ qsay() {
 
 guess_old_theme() {
     local file=$1
-    sed -r -n 's/^#\s+Color-theme: ([A-Za-z0-9-]+).*/\1/p' "$FILE"
+    sed -r -n 's/^#\s+Color-theme: ([A-Za-z0-9-]+).*/\1/p' "$FILE" | head -n1
 }
 
-new_theme() {
+toggle_theme() {
     local old=$1
-   
+
+    case $old in
+          white) echo dark         ;;
+     light-grey) echo dark         ;;
+          light) echo dark         ;;
+     light-blue) echo dark-blue    ;;
+    light-green) echo dark-purple  ;;
+      light-red) echo dark-red     ;;
+           dark) echo light        ;;
+    darker-blue) echo light        ;;
+      dark-blue) echo light-blue   ;;
+    dark-purple) echo light-green  ;;
+       dark-red) echo light-red    ;;
+              *) echo white        ;;
+    esac
+}
+
+
+cycle_theme() {
+    local old=$1
+
     case $old in
           white) echo light-grey    ;;
      light-grey) echo light         ;;
           light) echo light-blue    ;;
      light-blue) echo light-green   ;;
     light-green) echo light-red     ;;
-      light-red) echo dark          ;;
+      light-red) echo white         ;;
            dark) echo darker-blue   ;;
     darker-blue) echo dark-blue     ;;
       dark-blue) echo dark-purple   ;;
     dark-purple) echo dark-red      ;;
-       dark-red) echo white         ;;
+       dark-red) echo dark          ;;
               *) echo white         ;;
     esac
 }
