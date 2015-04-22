@@ -194,11 +194,11 @@ main() {
     [ "$vars" ] || fatal "Unrecognized theme: $cmd_theme"
     eval "$vars"
 
-    [ "$PRETEND" ] || egrep -q "^#\s+Color-theme: " "$FILE" || \
-        sed -i "1i# Color-theme: $theme" "$FILE"
+    [ "$SUBST_SUFFIX" ] || grep  -q "^\s*#\s*Color-theme: " "$FILE" || \
+        sed -i "1i# Color-theme: $cmd_theme" "$FILE"
 
     sed  $SED_ARG -r \
-        -e "s/^(#\s+Color-theme: ).*/\1$cmd_theme/$SUBST_SUFFIX" \
+         -e "s/^(#\s+Color-theme: ).*/\1$cmd_theme/$SUBST_SUFFIX" \
         -e "s/^(default_color ).*/\1$COLOR_1/$SUBST_SUFFIX" \
         -e "s/^(color2 ).*/\1$COLOR_2/$SUBST_SUFFIX" \
         -e "s/^(color3 ).*/\1$COLOR_3/$SUBST_SUFFIX" \
