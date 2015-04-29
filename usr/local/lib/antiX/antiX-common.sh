@@ -9,13 +9,15 @@ VDATE="Thu Dec 13 12:02:05 MDT 2012"
 RESTORE_LIVE_DIRS="usr/share/antiX-install"
 EXCLUDES_DIR=/usr/local/share/excludes
 INITRD_CONF=/live/config/initrd.out
-
 antiX_lib=/usr/local/lib/antiX
 
 [ "$Static_antiX_libs" ] || source $antiX_lib/antiX-gui-cli.sh
 
 export TEXTDOMAIN=$(basename $0)
 export TEXTDOMAINDIR=/usr/share/locale
+
+SCREEN_WIDTH=$(stty size 2>/dev/null | cut -d" " -f2)
+: ${SCREEN_WIDTH:=70}
 
 # This is needed for restarting
 CMDLINE_ARGS=("$@")
@@ -262,11 +264,7 @@ make_help() {
 
 #===== Timing commands ========================================================
 
-get_time() { cut -d" " -f22 /proc/self/stat ;}
-
-show_time() {
-    msg "$(printf "$green%ss$yellow %s" $(get_seconds) "$*")"
-}
+get_time() { date +%s; }
 
 get_seconds() {
     local dt=${1:-$(get_time)}
@@ -274,12 +272,12 @@ get_seconds() {
 }
 
 bogo_meter() {
-    local width=${1:-$SCREEN_WIDTH} delay=60  dot=.
+    local width=${SCREEN_WIDTH:-70} delay=60  dot=.
     local cnt=$(( width * 80 / 100 ))
-    local sleep=$(( 1000000 * delay / cnt ))
+    local sleep=$(echo $delay $cnt | awk '{printf "%.2f\n", $1/$2}')
     while true; do
         for s in $(seq 1 $cnt); do
-            usleep $sleep
+            sleep $sleep
             echo -n "$dot"
         done
         echo
@@ -293,17 +291,24 @@ time_cmd() {
     vmsg ">> $*"
     "$@"
     local ret=$?
-    local t1=$(get_time)
-    local secs=$(get_seconds $((t1 - t0)))
+    sync
+    local elapsed=$(elapsed t0)
     disown $pid 2>/dev/null
     kill -9 $pid 2>/dev/null
     echo
-    vmsg "$(pf "took %s seconds" $secs)"
+    vmsg "<< took $elapsed"
     return $ret
 }
 
 time_cmd_quiet() {
-    [ "$SET_VERBOSE" ] || echo ">> $*"
+
+    if [ ! "$SET_VERBOSE" ]; then
+        if [ "$SET_QUIET" ]; then
+            echo ">> $1 ..."
+        else
+            echo ">>$*"
+        fi
+    fi
     vmsg ">> $*"
 
     (bogo_meter)&
@@ -312,15 +317,42 @@ time_cmd_quiet() {
     local t0=$(get_time)
     "$@"  1>>$LOG_FILE 2>>$LOG_FILE
     local ret=$?
-    local t1=$(get_time)
-    local secs=$(get_seconds $((t1 - t0)))
+    sync
+    local elapsed=$(elapsed t0)
     disown $pid 2>/dev/null
     kill -9 $pid 2>/dev/null
     echo
-    vmsg "$(pf "took %s seconds" $secs)"
+    vmsg "<< took $elapsed"
     return $ret
 }
 
+elapsed() {
+    local secs mins hours
+    secs=$((-$1 + $(date +%s)))
+    [ $secs -lt 60 ] && printf "%8d %s\n" $secs $(plural $secs "sec%s") && return
+    mins=$((secs / 60))
+    secs=$((secs - 60 * mins))
+    [ $mins -lt 60 ] && printf "%5d:%02d mm:ss" $mins $secs && return
+    hours=$((mins / 60))
+    mins=$((mins - 60 * hours))
+    printf "%2d:%02d:%02d hh:mm:ss" $hours $mins $secs
+}
+
+#------------------------------------------------------------------------------
+# plural cnt string
+# Do simple substition on <string> to match the <cnt>.  May need more entries
+# but the current set suffices for now.
+#------------------------------------------------------------------------------
+plural() {
+    local n=$1 str=$2
+    case $n in
+        1) local s=  ies=y   are=is   were=was  es=;;
+        *) local s=s ies=ies are=are  were=were es=es;;
+    esac
+    echo "$str" | sed -e "s/%s\>/$s/g" -e "s/%ies\>/$ies/g" \
+        -e "s/%are\>/$are/g" -e "s/%n\>/$n/g" -e "s/%were\>/$were/g" \
+        -e "s/%es\>/$es/g" -e "s/%3d\>/$(printf "%3d" $n)/g"
+}
 
 #------------------------------------------------------------------------------
 # Function: read_conf [-q] [config_file]
@@ -620,7 +652,7 @@ get_mountpoint() {
     local loop=$(losetup -a | grep "($dev)" | cut -d: -f1)
     [ -z "$loop" -a $basename = rootfs ] && loop=$(losetup -a | grep "/$basename)" | cut -d: -f1 | head -n1)
     [ "$loop" ] || return
-    grep "^$loop " /proc/mounts | cut -d" " -f2 
+    grep "^$loop " /proc/mounts | cut -d" " -f2
 }
 
 get_device() {
@@ -747,7 +779,7 @@ my_umount() {
 #                             mount -t ext2    -o rw "$1" "$2" &>/dev/null
 #     return "$?"
 # }
-# 
+#
 # mount_file() {
 #     mount -t reiserfs         -o loop,rw "$1" "$2"  2>/dev/null || \
 #         mount -t ext4         -o loop,rw "$1" "$2"  2>/dev/null || \
@@ -755,26 +787,26 @@ my_umount() {
 #                 mount -t ext2 -o loop,rw "$1" "$2"  2>/dev/null
 #     return "$?"
 # }
-# 
-# 
+#
+#
 # mount_any_if_needed() {
 #     mount_X_if_needed "any" "$@"
 # }
-# 
+#
 # mount_file_if_needed() {
 #     "file" "$@"
 # }
-# 
+#
 # mount_X_if_needed() {
 #     local type="$1"
 #     local dev="$2"
 #     local mp="$3"
-# 
+#
 #     if ! [ -d "$mp" ]; then
 #         vpf "Creating mountpoint directory: %s" "[f]$mp[/i]"
 #         mkdir -p $mp || error_box "$(pfgt_ac "Could not create the %s mountpoint." "[f]$mp[/]")"
 #     fi
-# 
+#
 #     local exist_mp=$(get_mountpoint $dev)
 #     if [ "$exist_mp" ]; then
 #         #  If $dev was already mounted at $mp then there's nothing to do.
@@ -784,14 +816,14 @@ my_umount() {
 #     else
 #         if [ "$type" = "any" ]; then
 #             mount_any $dev $mp || error_box "$(pfgt_ac "Could not mount %s at %s."  "[f]$dev[/]" "[f]$mp[/]")"
-# 
+#
 #         elif [ "$type" = "file" ]; then
 #             mount_file $dev $mp || error_box "$(pfgt_ac "Could not mount file %s at %s."  "[f]$dev[/]" "[f]$mp[/]")"
-# 
+#
 #         else
 #             error_box "$(pfqt "Unknown type: %s sent to %s" "[n]$type[/]" "[f]mount_X_if_needed[/]")"
 #         fi
-# 
+#
 #         vpf "mounted %s at %s." "[f]$dev[/]" "[f]$mp[/]"
 #     fi
 #     # Record for later umounting
@@ -1168,7 +1200,7 @@ select_size() {
             return
             ;;
     esac
-    
+
     for size_str in $options; do
         str=$( echo $size_str | cut -d: -f1  | tr "_"  " ")
         size=$(echo $size_str | cut -d: -f2)
@@ -1366,9 +1398,26 @@ explore_dir() {
     shift;
 
     if [ "$SET_GUI" ]; then
+        local f filer
+        for f in rox thunar; do
+            which $f &>/dev/null && continue
+            filer=$f
+            break
+        done
+
+        if [ -z "$filer" ]; then
+            warn_box "$TITLE" "" "$(gt "Could not find a filer program for exploring")" ""
+            return
+        fi
+
+        local opts
+        case $filer in
+            rox) opts="--new -d"
+        esac
+
         #bg_info_box -o --undecorated "$TITLE" "" "$@"
         bg_info_box "$TITLE" "" "$@"
-        $GUI_FILER $FILER_OPTS $dir
+        $filer $opts $dir
         kill_bg_info_box
     else
         #markup_text "$@"
@@ -1376,7 +1425,7 @@ explore_dir() {
         for line in "$@"; do
             prompt="$prompt$(markup_text "$line")$NO_COLOR\n"
         done
-        
+
         prompt="$prompt$RED$ME$GREEN>$NO_COLOR "
         echo "$(pfgt_ac "Use the \"exit\" command to return to %s" "$ME")"
         (
@@ -1391,11 +1440,11 @@ explore_dir() {
 # fix_it_yourself() {
 #     local dir="$1"
 #     shift;
-# 
+#
 #     #noisy_yes_no_box "$@" "" "$(gt_ac "Do you want to try to fix this problem yourself?")" || exit
-# 
+#
 #     if [ "$SET_GUI" ]; then
-# 
+#
 #         $GUI_FILER $FILER_OPTS $dir
 #     else
 #         echo "$(pfgt_ac "Use the \"exit\" command to return to %s" "$ME")"

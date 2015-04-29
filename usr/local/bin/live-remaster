@@ -57,7 +57,7 @@ read_conf || read_conf_error "linuxfs"
 show_cli_title
 
 need_root
-start_logging
+start_logging live-remaster
 
 trap clean_up EXIT
 create_lock
@@ -172,17 +172,17 @@ fi
 gzip_option="gzip $(gt "(compresses faster)")"
   xz_option="xz $(gt "(compresses better)")"
 
-#combo_box compression-type "$gzip_option!$xz_option"                         \
-#        "$TITLE" ""                                                          \
-#        "$(gt "Please choose the type of compression to use")"               \
-#        "$(pfgt "%s will take less time" "[b]gzip[/b]")"                     \
-#        "$(pfgt "%s will result in a smaller file" "[b]xz[/b]")"
+combo_box compression-type "$gzip_option!$xz_option"                         \
+        "$TITLE" ""                                                          \
+        "$(gt "Please choose the type of compression to use")"               \
+        "$(pfgt "%s will take less time" "[b]gzip[/b]")"                     \
+        "$(pfgt "%s will result in a smaller file" "[b]xz[/b]")"
 
-UI_RESULT=xz
+#UI_RESULT=xz
 
 case $UI_RESULT in
-    xz*) MKSQ_OPTS="$MKSQ_OPTS -comp xz"   ;;
-  gzip*) MKSQ_OPTS="$MKSQ_OPTS -comp gzip" ;;
+    xz*) COMP_OPT="-comp xz"   ;;
+  gzip*) COMP_OPT="-comp gzip" ;;
 esac
 
 _General_="$(gt "General")"
@@ -265,14 +265,14 @@ FROM=$AUFS_MP
 exclude_file=$CONF_DIR/remaster.exclude
 #lifo_string TO_DELETE $exclude_file
 
-remaster_excludes "" $pretend_excludes | sort -u > $exclude_file
+remaster_excludes "" $pretend_excludes ${home_exclude#/} | sort -u > $exclude_file
 
 #--- create the tmp/new squashfs file
-MKSQ_OPTS="$MKSQ_OPTS $FROM $tmp_file -wildcards -ef $exclude_file"
+MKSQ_OPTS="$MKSQ_OPTS $FROM $tmp_file $COMP_OPT -wildcards -ef $exclude_file"
 #MKSQ_OPTS="$FROM $tmp_file"
 MKSQ_COMMAND="/usr/local/bin/run-mksquashfs $ret_file $MKSQ_OPTS"
 
-#vmsg "mksquashfs options: $MKSQ_OPTS"
+vmsg "mksquashfs options: $MKSQ_OPTS"
 
 restore_live
 
@@ -286,6 +286,7 @@ restore_live
 #
 #------------------------------------------------------------------------------
 
+T0=$(get_time)
 if [ "$SET_GUI" ]; then
     ($GUI_TERM $TERM_TITLE_OPT "$(gt "Remastering -- DO NOT CLOSE")" $TERM_OPTS $MKSQ_COMMAND &>/dev/null)&
     mksq_pid=$!
@@ -323,10 +324,13 @@ if [ "$SET_GUI" ]; then
 
         sleep 1
     done
+
 else
     $MKSQ_COMMAND
     sync
 fi
+
+vmsg "mksquashfs took $(elapsed $T0)"
 
 remaster_error() {
     local fmt="$(gettext "$1")" && shift
