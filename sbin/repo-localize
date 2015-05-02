@@ -6,12 +6,15 @@ ZDIR=/usr/share/zoneinfo
 SDIR=/etc/apt/sources.list.d
 
 HOST_PREFIXES="NL US"
-HOST_TYPES="AX MX"
+HOST_TYPES="AX MX MP"
 
-US_MX_HOST=main.mepis-deb.org
 US_AX_HOST=antix.daveserver.info
-NL_MX_HOST=nl.mxrepo.com
+US_MP_HOST=main.mepis-deb.org/mepiscr
+US_MX_HOST=main.mepis-deb.org/mx
+
 NL_AX_HOST=nl.mxrepo.com/antix
+NL_MP_HOST=nl.mxrepo.com/mepiscr
+NL_MX_HOST=nl.mxrepo.com/mx
 
 usage() {
     local ret=${1:-0}
