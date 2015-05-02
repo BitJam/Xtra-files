@@ -184,12 +184,12 @@ deb_code() {
 
 tz_to_ccode() {
     local tz=$1
-    cut -s -f1,3 zone.tab | grep "\s$tz$" | cut -f1 | tr '[A-Z]' '[a-z]'
+    cut -s -f1,3 $ZONE_TAB | grep "\s$tz$" | cut -f1 | tr '[A-Z]' '[a-z]'
 }
 
 ccode_to_tz() {
     local code=$1
-    cut -s -f1,3 zone.tab | grep -i "^$code\s" | head -n1 | cut -f2
+    cut -s -f1,3 $ZONE_TAB | grep -i "^$code\s" | head -n1 | cut -f2
 }
 
 tz_to_long() {
