@@ -63,7 +63,7 @@ main() {
 
     local tz=$1
 
-    find_zonetab_file || error "Could not find zone.tab file"
+    find_zonetab_file || fatal "Could not find zone.tab file"
 
     case $tz in
         [a-zA-Z][a-zA-Z]) country_code_to_timezone $tz
