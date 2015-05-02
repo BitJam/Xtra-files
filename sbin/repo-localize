@@ -1,0 +1,220 @@
+#!/bin/bash
+
+ME=${0##*/}
+
+ZDIR=/usr/share/zoneinfo
+SDIR=/etc/apt/sources.list.d
+
+US_MX_HOST=main.mepis-deb.org
+US_AX_HOST=antix.daveserver.info
+NL_MX_HOST=nl.mxrepo.com
+NL_AX_HOST=nl.mxrepo.com/antix
+
+usage() {
+    local ret=${1:-0}
+    cat<<Usage
+Usage: $me [options] <timezone|country-code>
+
+Update the mirrors in the *.list files under $SDIR/
+with the closest mirrors based on timezone city or two-letter
+country code.
+
+Options:
+    -d --dir=<dir>  Use <dir> instead of $SDIR
+    -h --help       Show this help
+    -p --pretend    Don't do anything just show what would be done
+    -q --quiet      Print less
+    -v --verbose    Print more
+Usage
+
+    exit $ret
+}
+
+main() {
+    local param val
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        param=${1#-}
+        shift
+
+        case $param in
+          -dir|d) [ $# -lt 1 ] && fatal "Expected a parameter after: -$param"
+                    val=$1
+                    [ -n "$val" -a -z "${val##-*}" ] \
+                        && fatal "Suspicious parameter after -$param: $val"
+
+                    shift           ;;
+              *=*)  val=${param#*=} ;;
+                *)  val="???"       ;;
+        esac
+
+        case $param in
+         -dir=*|d=*) SDIR=$val                         ;;
+             -dir|d) SDIR=$val                         ;;
+            -help|h) usage                             ;;
+         -pretend|p) PRETEND=true                      ;;
+           -quiet|q) QUIET=true                        ;;
+         -verbose|v) VERBOSE=true                      ;;
+                  *) fatal "Unknown argument: -$param" ;;
+        esac
+    done
+
+    [ $# -lt 1 ] && usage
+    [ $# -gt 1 ] && fatal "Only expected one command line argument"
+
+    local tz=$1
+
+    find_zonetab_file || error "Could not find zone.tab file"
+
+    case $tz in
+        [a-zA-Z][a-zA-Z]) country_code_to_timezone $tz
+                          tz=$NEW_TZ ;;
+    esac
+
+    local mx_ax_code=$(mx_ax_code $tz)
+    local   deb_code=$(deb_code   $tz)
+
+    case $mx_ax_code in
+        US)       MX_HOST=$US_MX_HOST
+            OTHER_MX_HOST=$NL_MX_HOST
+                  AX_HOST=$US_AX_HOST
+            OTHER_AX_HOST=$NL_AX_HOST ;;
+
+        NL)       MX_HOST=$NL_MX_HOST
+            OTHER_MX_HOST=$US_MX_HOST
+                  AX_HOST=$NL_AX_HOST
+            OTHER_AX_HOST=$US_AX_HOST ;;
+
+         *) fatal "Unknown MX/antiX mirror code: $mx_ax_code" ;;
+    esac
+
+    OTHER_MX_HOST=$(echo $OTHER_MX_HOST | sed 's/\./\\\./g')
+    OTHER_AX_HOST=$(echo $OTHER_AX_HOST | sed 's/\./\\\./g')
+
+    SED_MX="s=(http://)($OTHER_MX_HOST)(/)=\1$MX_HOST\3="
+    SED_AX="s=(http://)($OTHER_AX_HOST)(/)=\1$AX_HOST\3="
+    SED_DEB="s=(http://ftp\.)[a-z][a-z](\.debian.org/debian/)=\1$deb_code\2="
+
+    [ -d "$SDIR" ] || fatal "'$SDIR' is not a directory"
+
+    local file fcnt=0
+    for file in $(find $SDIR -maxdepth 1 -name "*.list"); do
+
+        # Use diff to see if there would be any change to the file
+        local diff=$(sed -r -e $SED_AX -e $SED_MX -e $SED_DEB $file | diff -q $file -)
+        [ "$diff" ] || continue
+
+        fcnt=$((fnct + 1))
+        if [ "$PRETEND" -o "$VERBOSE" ]; then
+            echo "File: $(basename $file)"
+            sed -n -r -e ${SED_AX}p -e ${SED_MX}p -e ${SED_DEB}p $file
+        fi
+
+        [ "$PRETEND" ] && continue
+
+        [ -z "$VERBOSE" ] && qsay "File: $(basename $file)"
+        sed -i -r -e ${SED_AX} -e ${SED_MX} -e ${SED_DEB} $file
+    done
+}
+
+find_zonetab_file() {
+    local z dir=${1:-$ZDIR}
+
+    ZONE_TAB=
+    for z in zone.tab zone1970.tab; do
+        test -r $dir/$z || continue
+        ZONE_TAB=$dir/$z
+        return 0
+    done
+    return 1
+}
+
+mx_ax_code() {
+    local tz=$1
+
+    case $tz in
+        America/*)	    echo US ;;
+        Antarctica/*)	echo US ;;
+        Atlantic/*)	    echo US ;;
+        Australia/*)	echo US ;;
+
+        Africa/*)	    echo NL ;;
+        Arctic/*)	    echo NL ;;
+        Europe/*)	    echo NL ;;
+
+        Asia/*)	        mx_ax_code_by_longitude $tz ;;
+        Indian/*)	    mx_ax_code_by_longitude $tz ;;
+        Pacific/*)	    mx_ax_code_by_longitude $tz ;;
+    esac
+}
+
+mx_ax_code_by_longitude() {
+    local tz=$1
+    local long=$(tz_to_long $tz)
+    if [ -z "$long" ]; then
+        error "No longitude found for timezone: $tz"
+        return 2
+    fi
+    if [ $long -gt -40 -a $long -lt 90 ]; then
+        echo NL
+    else
+        echo US
+    fi
+    return 0
+}
+
+country_code_to_timezone() {
+    local ccode=$1
+
+    NEW_TZ=$(ccode_to_tz $ccode)
+    [ -z "$NEW_TZ" ] && fatal "Could not find a timezone for country: $ccode"
+    vsay "Found timezone: $NEW_TZ for country code: $ccode"
+}
+
+deb_code() {
+    local tz=$1
+    local ccode=$(tz_to_ccode $tz)
+    if [ -z "$ccode" ]; then
+        error "No city code found for timezone: $tz"
+        return 2
+    fi
+
+    echo $ccode
+    return 0
+}
+
+tz_to_ccode() {
+    local tz=$1
+    cut -s -f1,3 zone.tab | grep "\s$tz$" | cut -f1 | tr '[A-Z]' '[a-z]'
+}
+
+ccode_to_tz() {
+    local code=$1
+    cut -s -f1,3 zone.tab | grep -i "^$code\s" | head -n1 | cut -f2
+}
+
+tz_to_long() {
+    local tz=$1
+    cut -s -f2,3 $ZONE_TAB | grep "\s$tz$" | sed -r 's/.*[0-9]([+-][0-9][0-9][0-9])[0-9]*.*/\1/'
+}
+
+error() {
+    echo "$ME Error: $*" >&2
+}
+
+fatal() {
+    echo "$ME Fatal Error: $*" >&2
+    exit 5
+}
+
+vsay() {
+    [ "$VERBOSE" ] || return
+    echo "$*"
+}
+
+qsay() {
+    [ "$QUIET" ] && return
+    echo "$*"
+}
+
+
+main "$@"
