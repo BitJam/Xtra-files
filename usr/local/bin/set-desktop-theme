@@ -11,6 +11,7 @@
 LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
 
 ROX_DIR=".config/rox.sourceforge.net/ROX-Filer"
+ROOT_DIR="/root"
 
 ME=${0##*/}
 DIR=$HOME
@@ -31,6 +32,7 @@ Options:
     -n --no-restart  Don't restart the window manager
     -p --pretend     Show the changes instead of doing theme
     -q --quiet       Suppress warning messages
+    -r --root        Change some files under /root
     -v --verbose     Show the changes and do them
 Usage
 
@@ -38,6 +40,7 @@ Usage
 }
 
 main() {
+    local args="$*"
 
     [ $# -eq 0 ] && usage
 
@@ -64,6 +67,7 @@ main() {
       -no-restart|n) NO_RESTART=true                 ;;
          -pretend|p) PRETEND=echo                    ;;
            -quiet|q) QUIET=true                      ;;
+            -root|r) AS_ROOT=true                    ;;
          -verbose|v) VERBOSE=true                    ;;
                   *) error "Unknown argument: -$arg" ;;
         esac
@@ -86,6 +90,13 @@ main() {
             *)  fatal "Unrecognized theme: $theme" ;;
     esac
 
+    if [ "$AS_ROOT" ]; then
+        test -w $ROOT_DIR || fatal "Can't write to $ROOT_DIR"
+        replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|" $ROOT_DIR/.gtkrc-2.0
+        replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|" $ROOT_DIR/.config/gtk-3.0/settings.ini
+        exit 0
+    fi
+
     replace_line "s|^\s*(Theme=\")[^\"]*(\").*|\1$ICEWM_THEME\2|"                   .icewm/theme
     replace_line "s|^\s*(session.styleFile:\s+).*|\1$FLUX_THEME|"                   .fluxbox/init
     replace_line "s|^(\s*<Option name=\"icon_theme\">)[^<]*(</Option>)|\1$ICONS\2|" $ROX_DIR/Options
@@ -97,6 +108,8 @@ main() {
     replace_file $theme .dillo/style.css
     replace_file $theme .jwm/theme
     replace_file $theme $ROX_DIR/Options
+
+    [ "$DISPLAY" -a $UID != 0 ] && gksu "$0 --root $args"
 
     [ "$PRETEND" ] && return
 
