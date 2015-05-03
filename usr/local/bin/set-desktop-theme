@@ -30,6 +30,7 @@ Options:
     -h --help        Show this help
     -n --no-restart  Don't restart the window manager
     -p --pretend     Show the changes instead of doing theme
+    -q --quiet       Suppress warning messages
     -v --verbose     Show the changes and do them
 Usage
 
@@ -62,6 +63,7 @@ main() {
             -help|h) usage                           ;;
       -no-restart|n) NO_RESTART=true                 ;;
          -pretend|p) PRETEND=echo                    ;;
+           -quiet|q) QUIET=true                      ;;
          -verbose|v) VERBOSE=true                    ;;
                   *) error "Unknown argument: -$arg" ;;
         esac
@@ -153,6 +155,7 @@ restart_desktop() {
 }
 
 warn() {
+    [ "$QUIET" ] && return
     echo "$ME warning: $*" >&2
 }
 
