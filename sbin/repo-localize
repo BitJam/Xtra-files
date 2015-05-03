@@ -116,7 +116,6 @@ assign_exprs() {
     local prefix=$1  type host
     for type in $HOST_TYPES; do
         eval host=\$${prefix}_${type}_HOST
-
         local oprefix ohost_list= ohost
         for oprefix in $HOST_PREFIXES; do
             [ "$oprefix" = "$prefix" ] && continue
