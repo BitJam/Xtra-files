@@ -130,7 +130,6 @@ assign_exprs() {
     done
 }
 
-
 find_zonetab_file() {
     local z dir=${1:-$ZDIR}
 
