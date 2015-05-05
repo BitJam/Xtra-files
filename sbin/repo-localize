@@ -179,6 +179,10 @@ mx_ax_code_by_longitude() {
 country_code_to_timezone() {
     local ccode=$1
 
+    case $ccode in
+        uk) ccode=gb ;;
+    esac
+
     NEW_TZ=$(ccode_to_tz $ccode)
     [ -z "$NEW_TZ" ] && fatal "Could not find a timezone for country: $ccode"
     vsay "Found timezone: $NEW_TZ for country code: $ccode"
@@ -191,6 +195,52 @@ deb_code() {
         error "No city code found for timezone: $tz"
         return 2
     fi
+
+    case $ccode in
+                                         gb) ccode=uk;;
+
+                             aq|cx|mu|re|tf) ccode=au;;
+                                         lu) ccode=be;;
+                                   al|me|mk) ccode=bg;;
+        ag|ai|ao|aw|bb|bl|bo|bq|bw|ci|co|cw) ccode=br;;
+        dm|ec|gd|gf|gn|gp|gy|kn|lc|lr|ls|mf) ccode=br;;
+        mq|ms|na|pe|pr|py|sl|sr|sx|tt|vc|ve) ccode=br;;
+                                   vg|vi|za) ccode=br;;
+                                      gl|pm) ccode=ca;;
+                                      li|mc) ccode=ch;;
+                             ar|ec|pf|pn|uy) ccode=cl;;
+                          bt|kg|kz|mn|np|uz) ccode=cn;;
+                                      ad|dz) ccode=es;;
+        bi|cd|cf|cg|cm|eg|ga|gq|rw|sd|ss|sz) ccode=gr;;
+                                td|ug|zm|zw) ccode=gr;;
+                                   mo|ph|tl) ccode=hk;;
+                                         ba) ccode=hr;;
+                                         rs) ccode=hu;;
+                                         im) ccode=ie;;
+        ae|af|am|az|bh|cy|dj|er|et|ge|il|iq) ccode=ir;;
+        jo|ke|km|kw|kz|lb|mg|mw|mz|om|pk|ps) ccode=ir;;
+           qa|sa|sc|so|sy|tj|tm|tz|uz|ye|yt) ccode=ir;;
+                                      fo|sj) ccode=is;;
+                             ly|mt|sm|tn|va) ccode=it;;
+                                         kp) ccode=kr;;
+                                         lv) ccode=lt;;
+                    bs|bz|cu|do|ht|jm|ky|tc) ccode=mx;;
+        as|fj|fm|gu|ki|mh|mp|nf|nr|pg|pw|sb) ccode=nc;;
+                          tk|to|tv|vu|wf|ws) ccode=nc;;
+                                   ck|nu|pf) ccode=nz;;
+        bf|bj|bm|cv|eh|fk|gh|gi|gm|gs|gw|ma) ccode=pt;;
+                    ml|mr|ne|ng|sh|sn|st|tg) ccode=pt;;
+                                         md) ccode=ro;;
+                                      kz|mn) ccode=ru;;
+                                         ax) ccode=se;;
+                             cr|gt|hn|ni|pa) ccode=sv;;
+        bd|bn|cc|id|in|io|kh|la|lk|mm|mv|my) ccode=th;;
+                                      sg|vn) ccode=th;;
+                                         id) ccode=tw;;
+                                      gg|je) ccode=uk;;
+                                      ki|um) ccode=us;;
+                                          *) ccode=us;;
+    esac
 
     echo $ccode
     return 0
