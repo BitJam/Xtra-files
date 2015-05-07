@@ -14,6 +14,9 @@
 # GETTEXT_KEYWORD="remaster_error"
 # GETTEXT_KEYWORD="error_box_pf"
 
+# GETTEXT_KEYWORD="fmt_size"
+# GETTEXT_KEYWORD="fmt_any"
+
 # Only needed for the location of the protect files
 source /usr/local/lib/antiX/antiX-get-param.sh
 
@@ -179,11 +182,12 @@ combo_box compression-type "$gzip_option!$xz_option"                         \
         "$(pfgt "%s will result in a smaller file" "[b]xz[/b]")"
 
 #UI_RESULT=xz
-
 case $UI_RESULT in
-    xz*) COMP_OPT="-comp xz"   ;;
-  gzip*) COMP_OPT="-comp gzip" ;;
+    xz*) COMP_TYPE="xz"   ;;
+  gzip*) COMP_TYPE="gzip" ;;
 esac
+
+OTHER_OPTS="$OTHER_OPTS -comp $COMP_TYPE"
 
 _General_="$(gt "General")"
 _Personal_="$(gt "Personal")"
@@ -201,6 +205,23 @@ if [ "$SET_GENERAL" ]; then
     cp $PERSIST_PROTECT_FILE $REMASTER_PROTECT_FILE
 else
     rm -f $REMASTER_PROTECT_FILE
+fi
+
+num_cpu=$(grep -c "^processor\s" /proc/cpuinfo)
+lim_cpu=$((num_cpu / 2))
+cpu_ratio="$num_cpu/$num_cpu"
+
+if [ $num_cpu -gt 1 ] &&  mksquashfs --help 2>&1 | grep -- -processors && \
+    no_yes_box "" \
+        "$(gt "Do you want to limit the number of CPUs used?")" \
+        "" \
+        "$(gt "This will make the remaster take twice as long.")" \
+        "$(gt "But there is less chance your computer will overheat.")"; then
+
+    OTHER_OPTS="$OTHER_OPTS -processors $lim_cpu"
+    cpu_ratio="$lim_cpu/$num_cpu"
+
+
 fi
 
 if ! [ "$NO_INFO" ]; then
@@ -268,7 +289,7 @@ exclude_file=$CONF_DIR/remaster.exclude
 remaster_excludes "" $pretend_excludes ${home_exclude#/} | sort -u > $exclude_file
 
 #--- create the tmp/new squashfs file
-MKSQ_OPTS="$MKSQ_OPTS $FROM $tmp_file $COMP_OPT -wildcards -ef $exclude_file"
+MKSQ_OPTS="$MKSQ_OPTS $FROM $tmp_file $OTHER_OPTS -wildcards -ef $exclude_file"
 #MKSQ_OPTS="$FROM $tmp_file"
 MKSQ_COMMAND="/usr/local/bin/run-mksquashfs $ret_file $MKSQ_OPTS"
 
@@ -330,7 +351,8 @@ else
     sync
 fi
 
-vmsg "mksquashfs took $(elapsed $T0)"
+elapsed=$(elapsed $T0)
+vmsg "mksquashfs took $elapsed"
 
 remaster_error() {
     local fmt="$(gettext "$1")" && shift
@@ -346,7 +368,6 @@ remaster_error() {
     || rm -f $tmp_file
     exit 2
 }
-
 
 [ -f $ret_file ] || remaster_error "Remastering Terminated Early"
 
@@ -368,17 +389,41 @@ mv $tmp_file $new_file
 
 clean_up && trap EXIT
 
-info_box -c                                                                                \
-    "$(gt "Created new compressed filesystem file:")"                                      \
-    ""                                                                                     \
-    "[f]$new_file[/]"                                                                      \
-    "$(pfgt "size: %s Meg" "[n]$sq_new_size[/]")"                                          \
-    ""                                                                                     \
+main_text=(
+    "$(fmt_size "linuxfs size"  $sq_new_size)"
+    "$(fmt_any  "elapsed time"  $elapsed)"
+    "$(fmt_any  "processors"    $cpu_ratio)"
+    "$(fmt_any  "compression"   $COMP_TYPE)"
+)
+
+for t in "${main_text[@]}"; do
+    vmsg "$t"
+done
+
+
+info_box -c                                             \
+    "$(gt "Created new compressed filesystem file:")"   \
+    "[f]$new_file[/]"                                   \
+    "[fixed]"                                           \
+    "${main_text[@]}"                                   \
+    "[/]"                                               \
     "$(gt "The new file should be used automatically the next time you boot.")"            \
     ""                                                                                     \
     "$(gt "If there is a problem with the new system:")"                                   \
     "$(pfgt "Use the %s  boot option to return to the current system."  "[b]rollback[/]")" \
-    "" ""                                                                                  \
+    "" ""
+
+#    "[f]$new_file[/]"                                                                      \
+#    "$(pfgt "size: %s Meg" "[n]$sq_new_size[/]")"                                          \
+#    "$(pfgt "elapsed time: %s" "[n]$elapsed[/]")"                                          \
+#    "$(pfgt "processors: %s" "[n]$cpu_ratio[/]")"                                          \
+#    ""                                                                                     \
+#    "$(gt "The new file should be used automatically the next time you boot.")"            \
+#    ""                                                                                     \
+#    "$(gt "If there is a problem with the new system:")"                                   \
+#    "$(pfgt "Use the %s  boot option to return to the current system."  "[b]rollback[/]")" \
+#    "" ""                                                                                  \
+
 
 [ -e /live/config/persist-save.conf \
     -o -e /live/config/persist-root ] || exit 0
