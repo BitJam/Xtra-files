@@ -78,6 +78,7 @@ main() {
 
     local mx_ax_code=$(mx_ax_code $tz)
     local   deb_code=$(deb_code   $tz)
+    vsay "deb mirror: $deb_code"
 
     # Only update if the mirror is different from the one we want
     SED_EXPR="-e /ftp\.$deb_code\.debian\.org/!s=(http://ftp\.)[a-z][a-z](\.debian.org/debian/)=\1$deb_code\2="
@@ -196,50 +197,69 @@ deb_code() {
         return 2
     fi
 
+    # Note: most of the case statement was created by deb-mirror-by-tz.pl
     case $ccode in
                                          gb) ccode=uk;;
 
-                             aq|cx|mu|re|tf) ccode=au;;
-                                         lu) ccode=be;;
-                                   al|me|mk) ccode=bg;;
-        ag|ai|ao|aw|bb|bl|bo|bq|bw|ci|co|cw) ccode=br;;
-        dm|ec|gd|gf|gn|gp|gy|kn|lc|lr|ls|mf) ccode=br;;
-        mq|ms|na|pe|pr|py|sl|sr|sx|tt|vc|ve) ccode=br;;
-                                   vg|vi|za) ccode=br;;
-                                      gl|pm) ccode=ca;;
-                                      li|mc) ccode=ch;;
-                             ar|ec|pf|pn|uy) ccode=cl;;
-                          bt|kg|kz|mn|np|uz) ccode=cn;;
-                                      ad|dz) ccode=es;;
-        bi|cd|cf|cg|cm|eg|ga|gq|rw|sd|ss|sz) ccode=gr;;
-                                td|ug|zm|zw) ccode=gr;;
-                                   mo|ph|tl) ccode=hk;;
-                                         ba) ccode=hr;;
-                                         rs) ccode=hu;;
-                                         im) ccode=ie;;
+                                         at) ccode=at;;
+                          aq|au|cx|mu|re|tf) ccode=au;;
+                                      be|lu) ccode=be;;
+                                al|bg|me|mk) ccode=bg;;
+        ag|ai|ao|aw|bb|bl|bo|bq|br|bw|ci|co) ccode=br;;
+        cw|dm|ec|gd|gf|gn|gp|gy|kn|lc|lr|ls) ccode=br;;
+        mf|mq|ms|na|pe|pr|py|sl|sr|sx|tt|vc) ccode=br;;
+                                ve|vg|vi|za) ccode=br;;
+                                         by) ccode=by;;
+                                   ca|gl|pm) ccode=ca;;
+                                   ch|li|mc) ccode=ch;;
+                          ar|cl|ec|pf|pn|uy) ccode=cl;;
+                       bt|cn|kg|kz|mn|np|uz) ccode=cn;;
+                                         cz) ccode=cz;;
+                                         de) ccode=de;;
+                                         dk) ccode=dk;;
+                                         ee) ccode=ee;;
+                                   ad|dz|es) ccode=es;;
+                                       "fi") ccode=fi;;
+                                         fr) ccode=fr;;
+        bi|cd|cf|cg|cm|eg|ga|gq|gr|rw|sd|ss) ccode=gr;;
+                             sz|td|ug|zm|zw) ccode=gr;;
+                                hk|mo|ph|tl) ccode=hk;;
+                                      ba|hr) ccode=hr;;
+                                      hu|rs) ccode=hu;;
+                                      ie|im) ccode=ie;;
         ae|af|am|az|bh|cy|dj|er|et|ge|il|iq) ccode=ir;;
-        jo|ke|km|kw|kz|lb|mg|mw|mz|om|pk|ps) ccode=ir;;
-           qa|sa|sc|so|sy|tj|tm|tz|uz|ye|yt) ccode=ir;;
-                                      fo|sj) ccode=is;;
-                             ly|mt|sm|tn|va) ccode=it;;
-                                         kp) ccode=kr;;
-                                         lv) ccode=lt;;
-                    bs|bz|cu|do|ht|jm|ky|tc) ccode=mx;;
-        as|fj|fm|gu|ki|mh|mp|nf|nr|pg|pw|sb) ccode=nc;;
-                          tk|to|tv|vu|wf|ws) ccode=nc;;
-                                   ck|nu|pf) ccode=nz;;
+        ir|jo|ke|km|kw|kz|lb|mg|mw|mz|om|pk) ccode=ir;;
+        ps|qa|sa|sc|so|sy|tj|tm|tz|uz|ye|yt) ccode=ir;;
+                                   fo|is|sj) ccode=is;;
+                          it|ly|mt|sm|tn|va) ccode=it;;
+                                         jp) ccode=jp;;
+                                      kp|kr) ccode=kr;;
+                                      lt|lv) ccode=lt;;
+                 bs|bz|cu|do|ht|jm|ky|mx|tc) ccode=mx;;
+        as|fj|fm|gu|ki|mh|mp|nc|nf|nr|pg|pw) ccode=nc;;
+                       sb|tk|to|tv|vu|wf|ws) ccode=nc;;
+                                         nl) ccode=nl;;
+                                         no) ccode=no;;
+                                ck|nu|nz|pf) ccode=nz;;
+                                         pl) ccode=pl;;
         bf|bj|bm|cv|eh|fk|gh|gi|gm|gs|gw|ma) ccode=pt;;
-                    ml|mr|ne|ng|sh|sn|st|tg) ccode=pt;;
-                                         md) ccode=ro;;
-                                      kz|mn) ccode=ru;;
-                                         ax) ccode=se;;
-                             cr|gt|hn|ni|pa) ccode=sv;;
+                 ml|mr|ne|ng|pt|sh|sn|st|tg) ccode=pt;;
+                                      md|ro) ccode=ro;;
+                                   kz|mn|ru) ccode=ru;;
+                                      ax|se) ccode=se;;
+                                         si) ccode=si;;
+                                         sk) ccode=sk;;
+                          cr|gt|hn|ni|pa|sv) ccode=sv;;
         bd|bn|cc|id|in|io|kh|la|lk|mm|mv|my) ccode=th;;
-                                      sg|vn) ccode=th;;
-                                         id) ccode=tw;;
-                                      gg|je) ccode=uk;;
-                                      ki|um) ccode=us;;
-                                          *) ccode=us;;
+                                   sg|th|vn) ccode=th;;
+                                         tr) ccode=tr;;
+                                      id|tw) ccode=tw;;
+                                         ua) ccode=ua;;
+                                   uk|gg|je) ccode=uk;;
+                                   ki|um|us) ccode=us;;
+
+                                          *) fatal "Unknown country code: $ccode"
+                                             ccode=us;;
     esac
 
     echo $ccode
