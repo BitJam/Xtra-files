@@ -1,0 +1,15 @@
+#!/bin/sh
+
+ME=${0##*/}
+
+PATH=$PATH:/usr/local/bin
+
+     img=/usr/local/share/backgrounds/MX-14_Turbulence.jpg
+captions=/usr/local/share/backgrounds/captions
+
+font=/usr/share/fonts/truetype/ttf-bitstream-vera/Vera
+font=/usr/share/fonts/ttf-bitstream-vera/Vera
+
+(feh -x -F -e $font/40 -K captions $img)&
+echo $! > /tmp/$ME.pid
+
