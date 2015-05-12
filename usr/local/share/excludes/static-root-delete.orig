@@ -1,36 +1,16 @@
 #--------------------------------------------------------------------
-# live-remaster-exclude.list
+# static-root-delete.list
 #
-# Files in this list will be excluded  live-remaster is created.
+# The files listed here will be deleted at shutdown on live systems
+# when static root persistence is enabled.
 #--------------------------------------------------------------------
 
-/dev/*
-/etc/live/protect/persist
-/etc/live/protect/remaster
-/etc/live/version/rootfs.ver
-/etc/udev/rules.d/*-persistent-cd.rules
 /etc/udev/rules.d/*-persistent-net.rules
-/lost+found
-/media/*
-/proc
-/root/.bash_history
-/sys
+/etc/udev/rules.d/*-persistent-cd.rules
 /tmp/*
+/tmp/.*
 /var/cache/apt/*.bin
 /var/cache/apt/archives/*.deb
 /var/cache/debconf/*-old
-/var/cache/lightdm
 /var/lib/apt/lists/*
-/var/lib/dhcp/*
 /var/lib/dpkg/*-old
-/var/lib/dpkg/*-old
-/var/lib/lightdm/.Xauthority
-/var/lib/lightdm/.cache
-/var/lib/nfs/rpc_pipefs/*
-/var/lib/sudo/*
-/var/lib/udisks/*
-/var/lib/urandom/*
-/var/log/*
-/var/mail/*
-/var/spool/mail/*
-/var/tmp/*

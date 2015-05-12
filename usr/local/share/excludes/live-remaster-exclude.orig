@@ -8,14 +8,13 @@
 /etc/live/protect/persist
 /etc/live/protect/remaster
 /etc/live/version/rootfs.ver
-/etc/udev/rules.d/*-persistent-cd.rules
-/etc/udev/rules.d/*-persistent-net.rules
+/etc/udev/rules.d/*-persistent-*.rules
 /lost+found
 /media/*
 /proc
 /root/.bash_history
 /sys
-/tmp/*
+/tmp
 /var/cache/apt/*.bin
 /var/cache/apt/archives/*.deb
 /var/cache/debconf/*-old
@@ -33,4 +32,4 @@
 /var/log/*
 /var/mail/*
 /var/spool/mail/*
-/var/tmp/*
+/var/tmp
