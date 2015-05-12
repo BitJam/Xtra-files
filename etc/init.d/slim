@@ -29,11 +29,14 @@ case $1 in
     if [ "$HEED_DEFAULT_DISPLAY_MANAGER" = "true" ] &&
        [ -e $DEFAULT_DISPLAY_MANAGER_FILE ] &&
        [ "$(cat $DEFAULT_DISPLAY_MANAGER_FILE)" != "$DAEMON" ]; then
-      echo "Not starting X display manager (slim); it is not the default display manager."
+        echo "Not starting X display manager (slim); it is not the default display manager."
     else
-      echo -n "Starting X display manager: slim"
-      start-stop-daemon --start --quiet $SSD_START_ARGS || echo -n " already running"
-      echo "."
+        startx=/usr/bin/startx
+        deskts=/usr/local/bin/desktop-session
+
+        echo -n "Starting X and desktop-session directly"
+        u -c "$startx $deskts -- vt7" --login demo
+
     fi
   ;;
 
