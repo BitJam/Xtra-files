@@ -523,8 +523,10 @@ _excludes() {
 
     # append trailing slash to non-empty $dir
     [ -n "${dir%%*/}" ] && dir="$dir/"
+    local remove_slash
+    [ -n "$dir" ] && remove_slash="-e s=^\s*/=="
 
-    for file in $(grep -v "^\s*#" $list_file | sed -r -e 's=^\s*/=='  -e 's/\s+#.*//') "$@"; do
+    for file in $(grep -v "^\s*#" $list_file | sed -r $remove_slash  -e 's/\s+#.*//') "$@"; do
         echo "$dir$file"
     done
 }
