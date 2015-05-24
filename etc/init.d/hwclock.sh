@@ -98,7 +98,7 @@ hwclocksh()
 	    #
 
 	    if mountpoint -q /live/aufs; then
-		verbose_log_action_msg "Not setting clock on Live system"
+		verbose_log_action_msg "Not setting hardware clock on Live system"
 		exit 0
 	    fi
 	
