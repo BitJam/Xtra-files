@@ -26,10 +26,9 @@ report_unkillable() {
 
 do_stop () {
 
-    local live_prog full_live live_dir=/live
-    read live_dir 2>/dev/null < /etc/live/live-dir
+    local live_prog full_live
     for live_prog in live-umount umount-live; do
-        full_live=$live_dir/bin/$live_prog
+        full_live=/live/bin/$live_prog
         [ -x $full_live ] || continue
         exec $full_live --sendsigs </dev/console >/dev/console
     done
