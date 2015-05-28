@@ -25,14 +25,6 @@ report_unkillable() {
 }
 
 do_stop () {
-
-    local live_prog full_live
-    for live_prog in live-umount umount-live; do
-        full_live=/live/bin/$live_prog
-        [ -x $full_live ] || continue
-        exec $full_live --sendsigs </dev/console >/dev/console
-    done
-
 	OMITPIDS=
 
 	for omitfile in /run/sendsigs.omit; do
@@ -115,7 +107,7 @@ do_stop () {
 }
 
 case "$1" in
-  start)
+  start|status)
 	# No-op
 	;;
   restart|reload|force-reload)
