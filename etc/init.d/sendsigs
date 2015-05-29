@@ -25,6 +25,17 @@ report_unkillable() {
 }
 
 do_stop () {
+
+    local live_prog full_live live_dir=/live
+    read live_dir 2>/dev/null < /etc/live/live-dir
+    for live_prog in live-umount umount-live; do
+        full_live=$live_dir/bin/$live_prog
+        [ -x $full_live ] || continue
+        # Don't use exec here so the rest of sendsigs code runs
+        $full_live --run-scripts </dev/console >/dev/console
+        break
+    done
+
 	OMITPIDS=
 
 	for omitfile in /run/sendsigs.omit; do
