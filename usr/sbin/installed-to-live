@@ -1,0 +1,328 @@
+#!/bin/bash
+
+ME=${0##*/}
+
+USER_PW=demo:demo
+ROOT_PW=root:root
+
+ROOT_DIR=/ro-root
+FROM_DIR=/
+WORK_DIR=/tmp/$ME
+
+CONF_FILE=$WORK_DIR/undo.conf
+
+TEMPLATE_DIR=/usr/local/share/live-files/root
+
+PRETEND=true
+
+PW_FILES="/etc/passwd /etc/shadow /etc/gshadow /etc/group"
+BIND_FILES="$PW_FILES /etc/slim.conf /etc/lightdm/lightdm.conf"
+
+usage() {
+    local ret=${1:-0}
+
+    cat<<Usage
+Usage: $ME [options] <commands??>
+Use bind mounts to create a filesystem that looks like the live system.
+
+Create a config file $CONF_FILE that can be used to undo what we did.
+This is needed because sometimes we create directories and touch files.
+
+Options:
+    -c --cleanup               Clean up after we have been run using info in $CONF_FILE
+                               This will delete created files and directories
+    -d --dir=<dir>             The root of the new fs.   Default: $ROOT_DIR
+    -f --from=<dir>            Directory we start with.  Default: $FROM_DIR
+    -h --help                  Show this help
+    -p --pretend               Don't do anything just show what would be done
+    -r --root=<user:password>  The root user and optional password
+    -t --template=<dir>        Template directory
+    -u --user=<user:password>  Default username and optional password
+    -w --work=<dir>            Temporary directory to hold our work
+
+    -v --verbose                Print more
+    -q --quiet                  Print less
+
+Note: if passwords aren't given then the username is used as the password.
+
+Current defaults:
+      --dir=$ROOT_DIR
+     --from=$FROM_DIR
+ --template=$TEMPLATE_DIR
+
+     --user=$USER_PW     
+     --root=$ROOT_PW
+
+Usage
+
+    exit $ret
+}
+
+main() {
+
+    local param val
+    local short_stack="cdfhprtuvq"
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        param=${1#-}
+        shift
+
+       # Unstack single-letter options
+        case $param in
+            [$short_stack][$short_stack]*)
+                if [ -z "${param//[$short_stack]/}" ]; then
+                    set -- $(echo $param | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
+                    continue
+                fi;;
+        esac
+
+        case $param in
+            -dir|-from|-root|-template|-user|-work|[dfrtuw]) 
+                    [ $# -lt 1 ] && fatal "Expected a parameter after: -$param"
+                    val=$1
+                    [ -n "$val" -a -z "${val##-*}" ] \
+                        && fatal "Suspicious parameter after -$param: $val"
+                    shift           ;;
+
+              *=*)  val=${param#*=} ;;
+                *)  val="???"       ;;
+        esac
+
+        case $param in
+               -cleanup|-c) DO_CLEANUP=true                   ;;
+                -dir=*|d=*) ROOT_DIR=$val                     ;;
+                    -dir|d) ROOT_DIR=$val                     ;;
+               -from=*|f=*) FROM_DIR=$val                     ;;
+                   -from|f) FROM_DIR=$val                     ;;
+           -template=*|t=*) TEMPLATE_DIR=$val                 ;;
+               -template|t) TEMPLATE_DIR=$val                 ;;
+               -user=*|u=*) USER_PW=$val                      ;;
+                   -user|u) USER_PW=$val                      ;;
+               -root=*|r=*) ROOT_PW=$val                      ;;
+                   -root|r) ROOT_PW=$val                      ;;
+                   -help|h) usage                             ;;
+                -pretend|p) PRETEND=true                      ;;
+                  -quiet|q) QUIET=true                        ;;
+                -verbose|v) VERBOSE=true                      ;;
+               -work=*|w=*) WORK_DIR=$val                     ;;
+                  -work|w=) WORK_DIR=$val                     ;;
+                         *) fatal "Unknown argument: -$param" ;;
+        esac
+    done
+
+    if [ "$DO_CLEANUP" ]; then
+        do_cleanup $CONF_FILE  $WORK_DIR
+        exit 0
+    fi
+
+    mount --bind $FROM_DIR $ROOT_DIR
+    [ "$TEMPLATE_DIR" ] && bind_mount_template "$TEMPLATE_DIR" "$ROOT_DIR"
+
+    #exit
+    #installed_to_live "$ROOT_DIR" "$WORK_DIR" "$TEMPLATE_DIR" "$USER_PW" "$ROOT_PW"
+    [ "$RM_DIRS" -o "$RM_FILES" ] && write_conf_file $CONF_FILE
+}
+
+make_dir() {
+    local dir=$1
+    test -d $dir && return
+    case ,$RM_DIRS, in
+        *,$dir,*) ;;
+               *) RM_DIRS="$RM_DIRS${RM_DIRS:+,}$dir" ;;
+    esac
+    pretend mkdir -p $dir
+}
+
+touch_file() {
+    local file=$1
+    local dir=$(dirname $file)
+    make_dir $dir
+    test -f $file && return
+    test -e $file && fatal "Expected a plain file at $file"
+
+    case ,$RM_FILES, in
+        *,$file,*) ;;
+                *) RM_FILES="$RM_FILES${RM_FILES:+,}$file" ;;
+    esac
+ 
+    pretend touch $file
+}
+
+bind_mount_template() {
+    local template_dir=$1  root_dir=$2
+
+    local file
+    while read file; do
+        local base=${file#$template_dir}
+        local targ=$root_dir$base
+        touch_file $targ
+        pretend mount --bind $file $targ
+    done <<Bind_Template
+$(find $template_dir -xtype f)
+Bind_Template
+}
+#echo $TEMP_DIR; exit
+
+RO_ROOT="$LIVE_DIR/ro-root"
+
+installed_to_live() {
+    local root_dir=$1  work_dir=$2  TEMPLATE_DIR=$3  user_pw=${4:-demo}  root_pw=${5:-root}
+    local BIND_DIR=$work_dir/bind
+    local ROOT_DIR=$work_dir/root
+
+    local def_user=${user_pw%%=*}
+
+
+    local empty_dir=$work_dir/empty
+    mkdir -p $empty_dir
+
+    local file pw_files grp_files
+    for file in $PW_FILES; do
+        test -e $root_dir$file || continue
+        pw_files="$pw_files $BIND_DIR$file"
+        case $file in
+            */group|*/gshadow) grp_files="$grp_files $BIND_DIR$file";;
+        esac
+    done
+
+    # Ensure we have a user with uid=1000
+    local added_user
+    local user_1000=$(cut -d: -f1,3 /etc/passwd | grep :1000$ | cut -d: -f1)
+    if [ -z "$user_1000" ]; then
+
+        # Don't assume there is no demo user but still try it first
+        user_1000=$def_user
+        while grep -q "^$user_1000:" /etc/passwd; do
+            user_1000=a$(dd if=/dev/urandom bs=1 count=40 2>/dev/null | md5sum | cut -c 1-9)
+        done
+
+        adduser --disabled-login --uid=1000 --no-create-home --gecos $def_user $user_1000
+        added_user=true
+    fi
+
+    local live_files
+    # Copy in files to the BIND_DIR *after we've added user_1000 (if needed)
+    # Use files from TEMPLATE_DIR first if they are available.
+    for file in $BIND_FILES; do
+        test -e $root_dir$file || continue
+        dir=$(dirname $file)
+        bdir=$BIND_DIR$dir
+        mkdir -p $bdir
+        if [ "$TEMPLATE_DIR" ] && test -e $TEMPLATE_DIR$file; then
+            live_files="$live_files,$file"
+            cp -a $TEMPLATE_DIR$file $bdir
+        else
+            cp -a $root_dir$file $bdir
+        fi
+    done
+
+    [ "$added_user" ] && deluser $user_1000
+
+    # Modify files
+
+    # Remove all other normal users from the passwd and group files
+    # Normal means having a home dir under /home and a login shell that ends in "sh"
+    local other_users=$(cut /etc/passwd -d: -f1,6,7 | grep ":/home/.*:.*sh$" | cut -d: -f1 \
+        | grep -v "^$user_1000$")
+
+    local other_user_regex=$(echo $other_users | tr " " '|')
+    sed -i -r "/^($other_user_regex):/d" $pw_files
+    sed -i -r -e "s/:($other_user_regex)(,|$)/:/" -e "s/,($other_user_regex)(,|$)/\2/" $grp_files
+
+    # Replace user_1000 with def_user if needed
+    if [ $user_1000 != $def_user ]; then
+        sed -i -r "s/^$user_1000:/$def_user:/" $pw_files
+        sed -i -r -e "s/:$user_1000(,|$)/:$def_user/" -e "s/,$user_1000(,|$)/,$def_user\1/" $grp_files
+    fi
+
+    do_sed /etc/slim.conf \
+        -e "s/^(\s#)*(default_user +).*/\2$def_user/p" \
+        -e "/xserver_arguments/ s/ -dpi\s+[0-9]+//p"   \
+        -e "s/^(\s#)*(auto_login +).*/\2yes/p"
+
+    do_sed /etc/lightdm/lightdm.conf \
+        -e "/autologin-user=demo/ s/^#+//p" \
+        -e "/xserver-command/ s/ -dpi [0-9]+//p"
+
+    set_password $user_pw $BIND_DIR
+    set_password $root_pw $BIND_DIR
+
+    mount --bind $empty_dir $root_dir/home
+
+    # Bind mount files and dir in $root_dir
+    for file in $BIND_FILES; do
+        test -e $root_dir$file || continue
+        mount --bind $BIND_DIR$file $root_dir$file
+    done
+}
+
+do_sed() {
+    local file=$1
+    shift
+    test -e $BIND_DIR$file || return
+    [ "$TEMPLATE_DIR" ] && test -e $TEMPLATE_DIR$file && return
+    echo sed -n -r "$@" $BIND_DIR$file
+    sed -n -r "$@" $BIND_DIR$file
+}
+
+local_clean_up() {
+    echo "local clean up"
+    mountpoint $RO_ROOT &>/dev/null && umount -R $RO_ROOT
+}
+
+# first param is "username=password" and the "=password" part is optional
+# If the password is empty then we use the username for the password.
+# Second param is a "chroot" directory containing the /etc/shadow file.
+set_password() {
+    local user_pw=$1  dir=$2
+    local user=${user_pw%%:*}
+    local pw=${user_pw#*:}
+    : ${pw:=$user}
+    local hash=$(mkpasswd -m sha-512 "$pw")
+    sed -n -r "s=^($user):[^:]*:=\1:$hash=p" $dir/etc/shadow
+}
+
+write_conf_file() {
+    local file=$1
+    mkdir -p $(dirname $file)
+    cat <<Conf_File > $file
+RM_DIRS="$RM_DIRS"
+
+RM_FILES="$RM_FILES"
+Conf_File
+}
+
+do_cleanup() {
+    local conf_file="$1"  work_dir="$2"
+    test -r $conf_file || exit 0
+
+    # Read in the RM_FILES and RM_DIRS variables
+    . $conf_file
+    local file dir
+    echo "$RM_FILES" | tr ',' '\n' | tac | while read file; do
+        pretend rm -f "$file"
+    done
+
+    echo "$RM_DIRS" | tr ',' '\n' | tac | while read dir; do
+        pretend rmdir --ignore-fail-on-non-empty --parents "$dir"
+    done
+
+    pretend rm -f $conf_file
+    [ "$work_dir" ] && pretend rm -rf $work_dir
+}
+
+#trap local_clean_up EXIT 
+#installed_to_live $RO_ROOT $TEMP_DIR
+fatal() {
+    local msg=$1  ret=${2:-2}
+    echo "$ME Error: $msg" >&2
+    exit $ret
+}
+
+pretend() {
+    [ "$PRETEND" -o "$VERBOSE" ] && echo "$@"
+    [ "$PRETEND" ] && return
+    ### "$@"
+}
+
+main "$@"
+
