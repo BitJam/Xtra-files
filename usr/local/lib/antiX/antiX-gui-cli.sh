@@ -144,9 +144,9 @@ timeout_box() {
     local timeout=$1
     shift
     if [ "$SET_GUI" ]; then
-        # FIXME: only okay if this is the last thing we do
-        SET_QUIET=true
-        okay_box -o --timeout=$timeout "$@"
+        local first=$1
+        shift
+        _dialog_box "okay" -o --timeout=$timeout "$first" "" "$@"
     else
         local line
         for line; do
@@ -529,6 +529,7 @@ get_text_cli() {
 get_text_cli_check() {
     local input="$1"
     pfgt_gui "you entered: %s" "$WHITE$input$NO_COLOR"
+    echo
     yes_no_box "$(gt_gui "Is this correct?")"
     return $?
 }
