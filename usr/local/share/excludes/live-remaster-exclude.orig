@@ -4,24 +4,33 @@
 # Files to be excluded when a live-remaster is created.
 # The original list is available in live-remaster-exclude.orig.
 #--------------------------------------------------------------------
-
+dev/*
+dev/.[^.]*
 etc/defaultdomain
 etc/fstab.*
 etc/ioctl.save
+etc/mtab
+etc/live/live-dir
 etc/live/protect/remaster
 etc/live/version/rootfs.ver
 etc/mtab
 etc/resolv.conf
-# etc/udev/rules.d/*-persistent-net.rules
+etc/udev/*-persistent-net.rules
 home/*/.Xauthority
+home/lost+found
 live
 lost+found
+media/*
+media/.[^.]*
 mnt/*
 root/.bash_history
 root/.dbus
 root/.gconf
 root/.gnome2
 run/*
+run/.[^.]*
+tmp/*
+tmp/.[^.]*
 swapfile
 var/cache/apt-show-versions/*
 var/cache/apt/*.bin
@@ -44,3 +53,5 @@ var/log/!(samba)
 var/log/samba/*
 var/mail/*
 var/spool/mail/*
+var/tmp/*
+var/tmp/.[^.]*
