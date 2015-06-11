@@ -48,6 +48,7 @@ This is needed because sometimes we create directories and touch files.
 
 Commands:
     start      Do the main bind mount and create cleanup.conf
+    status     Show status including contents of cleanup.conf
     general    Make it general purpose
     passwd     Only make general purpose password/group files
     add=<dir>  Add files from the <dir> template
@@ -146,12 +147,13 @@ main() {
     for cmd; do
         case $cmd in
               start) do_start   $CONF_FILE $WORK_DIR           ;;
+             status) do_status  $CONF_FILE                     ;;
                 add) do_add     $CONF_FILE $WORK_DIR           ;;
               add=*) do_add     $CONF_FILE $WORK_DIR ${cmd#*=} ;;
             general) do_general $CONF_FILE                     ;;
              passwd) do_passwd  $CONF_FILE                     ;;
             cleanup) do_cleanup $CONF_FILE $WORK_DIR           ;;
-                  *) fatal "Unexpected command: $cmd.  Expected start, add=dir, general, passwd, or cleanup"
+                  *) fatal "Unexpected command: $cmd.\nExpected: start, status, add, add=dir, general, passwd, or cleanup"
         esac
     done
 }
@@ -188,6 +190,41 @@ do_add() {
 
     write_conf_file $CONF_FILE
 }
+
+do_status() {
+    local conf_file=$1
+
+    echo "$ME status:"
+    if ! read_conf_file $conf_file force; then
+        echo "  unstarted"
+        exit 1
+    fi
+
+    echo "  started"
+
+    if ! test -d $BIND_ROOT; then
+        echo "  BIND_ROOT: $BIND_ROOT is not a directory"
+    elif mountpoint -q $BIND_ROOT; then
+        echo "  BIND_ROOT: $BIND_ROOT is mounted"
+    else
+        echo "  BIND_ROOT: $BIND_ROOT is not mounted"
+    fi
+
+    echo
+    echo "  Config file:"
+    echo ">>>>>>>>>>"
+    cat $conf_file
+    echo "<<<<<<<<<<"
+
+    [ "$VERBOSE" ] || exit 0
+
+    echo
+    echo ">> df -ahT | grep $BIND_ROOT"
+    df -ahT | grep $BIND_ROOT
+
+    exit 0
+}
+
 
 do_passwd() {
     local conf_file=$1
@@ -433,21 +470,23 @@ read_conf_file() {
 
     if ! test -r $conf_file; then
         [ "$force" ] || fatal "Could not find config file $conf_file"
-        return
+        return 1
     fi
 
     . $conf_file
+
+    return 0
 }
 
 fatal() {
     local msg=$1  ret=${2:-2}
-    echo "$ME Fatal Error: $msg" >&2
+    echo -e "$ME Fatal Error: $msg" >&2
     exit $ret
 }
 
 error() {
     local msg=$1
-    echo "$ME Error: $msg" >&2
+    echo -e "$ME Error: $msg" >&2
 }
 
 
