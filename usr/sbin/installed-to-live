@@ -217,10 +217,9 @@ do_status() {
     echo "<<<<<<<<<<"
 
     [ "$VERBOSE" ] || exit 0
-
     echo
-    echo ">> df -ahT | grep $BIND_ROOT"
-    df -ahT | grep $BIND_ROOT
+    echo ">> df -a | grep $BIND_ROOT | awk '{print \$6}'"
+    df -a | grep $BIND_ROOT | awk '{print $6}'
 
     exit 0
 }
