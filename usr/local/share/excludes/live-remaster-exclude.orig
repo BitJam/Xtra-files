@@ -14,11 +14,11 @@ etc/live/live-dir
 etc/live/protect/remaster
 etc/live/version/rootfs.ver
 etc/mtab
-etc/resolv.conf
 etc/udev/*-persistent-net.rules
 home/*/.Xauthority
 home/lost+found
-live
+live/*
+live/.[^.]*
 lost+found
 media/*
 media/.[^.]*
@@ -32,6 +32,9 @@ run/.[^.]*
 tmp/*
 tmp/.[^.]*
 swapfile
+# usr/lib/python*/*.pyo
+# usr/lib/python*/*/*.pyo
+# usr/lib/python*/*/*/*.pyo
 var/cache/apt-show-versions/*
 var/cache/apt/*.bin
 var/cache/apt/archives/*.deb
