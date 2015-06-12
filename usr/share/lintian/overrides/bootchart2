@@ -1,2 +1,0 @@
-# it's intentional, indeed.
-bootchart2: package-contains-empty-directory lib/bootchart/tmpfs/
