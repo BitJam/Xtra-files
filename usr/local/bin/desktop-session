@@ -171,7 +171,7 @@ launch_desktop() {
     
     #Line from BitJam to merge xresources into the database
     if [[ -z $(xrdb -query ) ]]; then
-        [ -r "$xresources_config" ] && xrdb -merge "$xresources_config"
+        [ -r "$xresources_config" ] && xrdb -merge "$xresources_config" &
     fi
     #end
     
