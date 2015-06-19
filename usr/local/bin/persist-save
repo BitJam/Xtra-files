@@ -9,6 +9,7 @@ antiX_lib=/usr/local/lib/antiX
 
 #source $antiX_lib/antiX-get-param.sh
 source $antiX_lib/antiX-common.sh     "$@"
+last_ps_file=$LIVE_DIR/config/last-persist-save
 
 TITLE="$(gt "antiX Save Persistent Root")"
 
@@ -47,7 +48,7 @@ main() {
     create_lock
 
     if [ "$PERSIST_UUID" ]; then
-        uuid_dev=$(blkid -U "$PERSIST_UUID")
+        uuid_dev=$(blkid -U "$PERSIST_UUID" -c /dev/null)
         [ -z "$uuid_dev" ] &&  error_box \
         "$(pfgt "The persistence device with UUID %s was not found" "[n]$PERSIST_UUID[/]")" \
         "$(pfgt "Please plug in the persistence device and try again")"
@@ -182,6 +183,8 @@ main() {
         timeout_box 2 "$(pfgt "%s succeeded" $ME)"
         exit 0
     fi
+
+    date +%s > $last_ps_file
 
     info_box                                              \
         "$(pfgt "%s succeeded" $ME)"                      \
