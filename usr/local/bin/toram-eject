@@ -23,6 +23,10 @@ read_conf -q
 vmsg "BOOT_DEV=$BOOT_DEV";
 [ "$BOOT_DEV" ] || error_box "$(gt "no BOOT_DEV given!")"
 
+flag_file=$LIVE_DIR/config/toram-eject
+test -e $flag_file || vexit "No $flag_file config file"
+rm -f $flag_file
+
 # Only eject removable media
 case "$BOOT_DEV" in
     /dev/sr[0-9]*) ;;
