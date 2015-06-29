@@ -45,7 +45,6 @@ yes_no_box -c                                                \
     "$(gt "Do you want the LiveCD/DVD ejected?")"            \
     || vexit "did not eject as per user request."
 
-echo "PATH=$PATH"
 eject $BOOT_DEV || error_box "$(pfgt "Could not eject %s" "[f]$BOOT_DEV[/]")"
 
 yes_no_box -c                                    \
