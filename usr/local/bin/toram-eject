@@ -11,7 +11,7 @@ source /usr/local/lib/antiX/antiX-common.sh "$@"
 
 trap clean_up EXIT
 
-BLURB="$(pfgt "\n    Eject LiveCD/DVD via a simple GUI if %s is enabled." "[p]toram[/]")"
+BLURB="$(pfgt "Eject LiveCD/DVD via a simple GUI if %s is enabled." "[p]toram[/]")"
 
 TITLE="$(gt "Automatic toram Eject")"
 
