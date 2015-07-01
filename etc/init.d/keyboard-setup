@@ -45,7 +45,7 @@ else
     }
 
     log_action_end_msg () {
-	if [ "$1" -eq 0 ]; then 
+	if [ "$1" -eq 0 ]; then
 	    echo done.
 	else
 	    echo failed.
@@ -54,16 +54,13 @@ else
 fi
 
 if [ -z "$should_run" -o -n "$dont_run" ]; then
-    #loadkeys us
-    font=Uni2-VGA16
 
-	log_action_begin_msg "Setting console font to $font"
+	log_action_begin_msg "Setting console font"
 
     for n in 1 2 3 4 5 6; do
         tty=/dev/tty$n
         test -e $tty || continue
-        # echo setfont -C $tty $font
-        setfont -C $tty $font
+        setfont -C $tty
     done
 
     log_action_end_msg $?
