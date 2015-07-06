@@ -76,7 +76,7 @@ grep -q " /live/boot-dev .*\<rw\>" /proc/mounts \
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>gksu $EDITOR /live/boot-dev/boot/syslinux/syslinux.cfg /live/boot-dev/boot/syslinux/gfxboot.cfg &</action>
+        <action>gksu "$EDITOR /live/boot-dev/boot/syslinux/syslinux.cfg /live/boot-dev/boot/syslinux/gfxboot.cfg" &</action>
       </button>
       <text use-markup="true" width-chars="28">
         <label>$(echo $"Edit Bootloader menu")</label>
