@@ -56,13 +56,9 @@ main() {
 
     local persist_opts
     case "$AUTOSAVE_MODE" in
-        $_Automatic_)
-            persist_opts=--quiet
-            ;;
-        $_Semi_Automatic_)
-            ;;
-        $_Manual_)
-            vmsg "Not auto-saving.  AUTOSAVE_MODE was set to $AUTOSAVE_MODE"
+        1*) persist_opts=--quiet ;;
+        2*) ;;
+        3*) vmsg "Not auto-saving.  AUTOSAVE_MODE was set to $AUTOSAVE_MODE"
             $real_cmd "$@"
             ;;
         *)  okay_box "$TITLE" "" \
