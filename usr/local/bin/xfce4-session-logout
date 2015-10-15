@@ -5,6 +5,10 @@
 
 ME=$(basename $0)
 
+LOCKOUT_TIME=60
+last_ps_file=/live/config/last-persist-save
+last_as_file=/live/config/last-auto-save
+
 export TEXTDOMAIN=persist-config
 
 DO_IT="exec"
@@ -67,7 +71,29 @@ main() {
             ;;
     esac
 
-    sudo $PERSIST_SAVE $persist_opts 2>&1 && $real_cmd "$@"
+    local file prev diff now=$(date +%s)
+    for file in $last_as_file $last_ps_file; do
+        test -r $file || continue
+        read prev 2>/dev/null < $file
+        diff=$(($now - $prev))
+        if [ $diff -le $LOCKOUT_TIME ]; then
+            timeout_box 2 \
+                "$(pfgt "Already saved less than %s seconds ago" $diff)" \
+                "$(pfgt "Won't autosave within %s seconds of a previous save" $LOCKOUT_TIME)"
+
+            $real_cmd
+            exit 0
+        fi
+    done
+
+    rm -f $last_ps_file
+
+    sudo $PERSIST_SAVE $persist_opts 2>&1
+    ret=$?
+    if [ $ret -eq 0 ]; then
+        date +%s > $last_as_file
+        $real_cmd "$@"
+    fi
 
     yes_no_box "Persist Save Error" ""                              \
         "$(gt "There was an error saving your changes.")"           \
