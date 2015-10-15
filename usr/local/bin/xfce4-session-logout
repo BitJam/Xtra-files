@@ -51,9 +51,9 @@ main() {
 
     TITLE="$(gt "MX Logout with Persist Save")"
 
-    local _Automatic_="$(gt "Automatic")"
-    local _Semi_Automatic_="$(gt "Semi-Automatic")"
-    local _Manual_="$(gt "Manual")"
+    #local _Automatic_="$(gt "Automatic")"
+    #local _Semi_Automatic_="$(gt "Semi-Automatic")"
+    #local _Manual_="$(gt "Manual")"
 
     AUTOSAVE_MODE=$_Semi_Automatic_
     [ -r $CONF_FILE ] && source $CONF_FILE
