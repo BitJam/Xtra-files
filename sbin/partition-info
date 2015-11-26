@@ -1,0 +1,330 @@
+#!/bin/bash
+
+ME=${0##*/}
+
+# See the Linux kernel file Documentation/devices.txt
+MAJOR_LIST="3,8,22,179"
+
+LSBLK_ARGS="--pairs --noheadings"
+DRIVE_ARGS="$LSBLK_ARGS --nodeps"
+DRIVE_FIELDS="name,size,rota,rm,uuid,model"
+PARTS_FIELDS="name,size,fstype,parttype,type,uuid,label"
+
+LIVE_CONFIG=/live/config/initrd.out
+
+usage() {
+    local ret=${1:-0}
+
+    cat <<Usage
+Usage:  $ME [options] <command|device>
+
+List information about block devices (drives) or partitions.  Always ignore
+swap partitions and extended boot record partitions.  By default ignore the
+live boot drive, the live boot partition, EFI partitions and Microsoft
+reserved and recovery partitions. Some of these can be enabled by options
+below.
+
+Commands:
+
+    <device>  (/dev/sda or sda, etc)
+        List information for partitions on <device>.  Lists:
+        name, size, filesystem type, and label.
+
+    all 
+        Display the same information for all partitions on all devices
+        (that have major device numbers on the list, see --major-num).
+
+    drives
+        Only display information for drives, not partitions.  Lists:
+        name, size, rotational, removeable, and model
+
+Options:
+
+    -b --boot
+        INCLUDE Live boot drive or partition.  Normally the drive and partition
+        are both excluded.
+        
+    -d  --dev-output
+        Add /dev/ to device names in lists.
+
+    -e, --efi-filter  
+        INCLUDE EFI partitions and Microsoft reserved and recovery partitions.
+
+    -h, --help
+        Show this help.
+
+    -H --header
+        Show a header line labeling each field.
+
+    -m <size>, --min-size=<size>
+        Only display paritions (or drives) that have at least this many megabytes.
+
+    -M <list>, --major-num=<list>
+        Only display drives and partitions that have a major device number on
+        this list.  Default: $MAJOR_LIST.  See the Linux Documentation file
+        devices.txt for details on major device numbers.
+
+   -t --tabs
+        Tab delimit output.
+Usage
+
+    exit $ret
+}
+
+main() {
+
+    [ $# -eq 0 ] && usage
+
+    local DEV_OUTPUT EFI_PARTS BOOT_PART MIN_SIZE TAB_DELIMIT
+
+    read_params "$@"
+    shift $SHIFT
+
+    [ $# -gt 0 ] || fatal "Expected a command or device name"
+
+    # Allow options before and after the command
+    local cmnd=$1
+    shift
+
+    # Allow options before and after the command
+    read_params "$@"
+    shift $SHIFT
+
+    [ $# -gt 0 ] && fatal "Expected only one command. Got: $cmnd $1"
+
+    # prepend MAJOR_LIST with "-I " if needed
+    if [ -n "$MAJOR_LIST" ]; then
+        echo $MAJOR_LIST | grep -q "^[1-9][0-9,]*\+$" \
+            || fatal "Invalid major number specification: $MAJOR_LIST"
+
+        MAJOR_ARG="-I $MAJOR_LIST"
+    fi
+
+    # Get UUID of live boot partition into BOOT_UUID variable
+    [ -z "$BOOT_PART" ] && test -r $LIVE_CONFIG && eval $(grep ^BOOT_UUID= $LIVE_CONFIG)
+
+    case $cmnd in
+           all) do_all_parts    ;;
+        drives) do_drives       ;;
+             *) do_parts $cmnd  ;;
+    esac
+}
+
+read_params() {
+    # Most of this code is boiler-plate for parsing cmdline args
+    SHIFT=0
+    # These are the single-char options that can stack
+    local short_stack="dehHmMt"
+
+    local arg val
+
+    # Loop through the cmdline args
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        arg=${1#-}
+        shift
+        SHIFT=$((shift + 1))
+        # Expand stacked single-char arguments
+        case $arg in
+            [$short_stack][$short_stack]*)
+                if echo "$arg" | grep -q "^[$short_stack]\+$"; then
+                    set -- $(echo $arg | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
+                    continue
+                fi;;
+        esac
+
+        # Deal with all options that take a parameter
+        case $arg in
+
+          # Add options to this list if the take a parameter
+          -major-num|-min-size|[mM]) 
+                [ $# -lt 1 ] && fatal "Expected a parameter after: $(pqw -$arg)"
+                val=$1
+                [ -n "$val" -a -z "${val##-*}" ] \
+                    && fatal "Suspicious argument after -$arg: $(pqw $val)"
+                    SHIFT=$((shift + 1))
+                    shift             ;;
+
+                  *=*)  val=${arg#*=} ;;
+                    *)  val="???"     ;;
+        esac
+
+        # Edit this case statement when adding/removing options
+        case $arg in
+                  -boot|b) BOOT_PART=true     ;;
+            -dev-output|d) DEV_OUTPUT=/dev/   ;;
+            -efi-filter|e) EFI_PARTS=true     ;;
+                  -help|h) usage              ;;
+                -header|H) SHOW_HEADER=true   ;;
+              -min-size|m) MIN_SIZE=$val      ;;
+          -min-size=*|m=*) MIN_SIZE=$val      ;;
+             -major-num|M) MAJOR_LIST=$val    ;;
+         -major-num=*|M=*) MAJOR_LIST=$val    ;;
+                  -tabs|t) TAB_DELIMIT=true   ;;
+        esac
+    done
+}
+
+do_drives() {
+
+    if [ "$TAB_DELIMIT" ]; then
+        format="%s\t%s\t%s\t%s\t%s\t%s\t%s"
+    else
+        format="%-10s %8s  %6s  %6s  %5s  %16s  %s"
+    fi
+ 
+    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size Rotate Remove Parts Model Labels
+
+    local line remove rotate
+    local NAME SIZE MODEL RM ROTA
+    while read line; do
+
+        # Note that lsblk escapes double-quotes and dollar signs when --pairs
+        # is used which makes doing the eval safe
+        eval "$line"
+
+        local dev=/dev/$NAME
+
+        greater_than_min_size $NAME || continue
+
+        contains_boot_partition $dev && continue
+
+        case $RM in
+            0) remove=no  ;;
+            1) remove=yes ;;
+            *) remove="?" ;;
+        esac
+
+        # The ROTA (rotational field) failed (was true) for my sandisk cruzer usb
+        # so I use "?" for all removable drives.
+        case $RM$ROTA in
+            00) rotate=no  ;;
+            01) rotate=yes ;;
+             *) rotate="?" ;;
+        esac
+
+        local pcnt=$(count_partitions $dev)
+        local labels=$(all_labels     $dev)
+
+        printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$rotate" "$remove" "$pcnt" "$MODEL" "$labels"
+    done <<Do_Drives
+$(lsblk $MAJOR_ARG $DRIVE_ARGS --output $DRIVE_FIELDS)
+Do_Drives
+}
+
+do_all_parts() {
+   _do_parts ""
+}
+
+do_parts() {
+    local drive=${1#/dev/}
+    local dev=/dev/$drive
+
+    test -e $dev || fatal "device $dev does not exist"
+    test -b $dev || fatal "device $dev is not a block device"
+
+    _do_parts $dev
+}
+
+_do_parts() {
+    local the_dev=$1
+
+    local format
+    if [ "$TAB_DELIMIT" ]; then
+        format="%s\t%s\t%s\t%s\t%s"
+    else
+        format="%-10s %8s %10s %10s %s"
+    fi
+
+    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size FStype Ptype Label
+
+    local NAME SIZE FSTYPE PARTTYPE TYPE LABEL
+    while read line; do
+        [ -n "$line" -a -z "${line##NAME=*}" ] || continue
+
+        # Note that lsblk escapes double-quotes and dollar signs when --pairs
+        # is used which makes doing the eval safe
+        eval "$line"
+
+        #echo "$line"; #continue
+
+        # Require a trailing digit in $NAME
+        # (we may need to change this for LVM)
+        [ -n "$NAME" -a -z "${NAME%%*[0-9]}" ] || continue
+
+        # Ignore extended boot record partitions
+        case $PARTTYPE in 0xf) continue;; esac
+
+        case $FSTYPE in swap) continue ;; esac
+
+        [ -n "$BOOT_UUID" -a "$BOOT_UUID" = "$UUID" ] && continue
+
+        # This will disable EFI/Win filtering of partition type
+        [ "$EFI_PARTS" ] || PARTTYPE=""
+
+        # See:
+        # https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_type_GUIDs
+        # for GPT ids below
+        case $PARTTYPE in
+            0C01|2700|EF00)                       continue ;;
+            # GPT EFI partition
+            C12A7328-F81F-11D2-BA4B-00A0C93EC93B) continue ;;
+            # GPT Microsoft reserved partition
+            E3C9E316-0B5C-4DB8-817D-F92DF00215AE) continue ;;
+            # GPT Windows Recovery Environment
+            DE94BBA4-06D1-4D40-A16A-BFD50179D6AC) continue ;;
+        esac
+
+        greater_than_min_size $NAME || continue
+
+        printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$FSTYPE" "$TYPE" "$LABEL"
+    done<<Lsblk
+    $(lsblk $MAJOR_ARG $LSBLK_ARGS --output $PARTS_FIELDS $the_dev)
+Lsblk
+}
+
+get_size() {
+    local part=$1
+    local drive=$(echo $part | sed -r 's/[0-9]+$//')
+    local path=$drive
+    [ "$drive" != "$part" ] && path=$drive/$part
+    local file=/sys/block/$path/size
+    test -r $file && cat $file
+}
+
+contains_boot_partition() {
+    local dev=$1
+    [ -z "$BOOT_UUID" ] && return 1
+    lsblk -no uuid $dev | grep -q "^$BOOT_UUID$"
+    return $?
+}
+
+greater_than_min_size() {
+    local dev=$1
+    [ -z "$MIN_SIZE" ] && return 0
+    local raw_size=$(get_size $dev)
+    [ -z "$raw_size" ] && return 1
+    [ $((raw_size / 2 / 1024)) -gt $MIN_SIZE ]
+    return $?
+}
+
+count_partitions() {
+    local drive=$1
+    lsblk -no parttype $drive | grep . | grep -v "^0xf$" | wc -l
+}
+
+all_mountpoints() {
+    local drive=$1
+    local mps=$(lsblk -no mountpoint $drive | grep -v "^\[")
+    echo $mps
+}
+all_labels() {
+    local drive=$1
+    local labels=$(lsblk -no label $drive | sed -r '/./ s/^|$/"/g')
+    echo $labels
+}
+fatal() {
+    echo "$ME fatal error: $*"
+    exit 2
+}
+
+main "$@"
