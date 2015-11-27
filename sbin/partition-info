@@ -2,8 +2,26 @@
 
 ME=${0##*/}
 
-# See the Linux kernel file Documentation/devices.txt
 MAJOR_LIST="3,8,22,179"
+# See the Linux kernel file Documentation/devices.txt for device numbers
+#
+#   3 block First MFM, RLL and IDE hard disk/CD-ROM interface   hda, hdb
+#   8 block SCSI disk devices (0-15)                            sda, sdb, ... sdp
+#  22 block Second IDE hard disk/CD-ROM interface               hdc, hdd
+# 179 block MMC block devices                                   mmcblk0, mmcblk1, ... mmcblk7
+#
+#   9 block Metadisk (RAID) devices                             md0, md1, ...
+# 253 block LVM (unofficial?)                                   [varies?]
+
+#  65 block SCSI disk devices (16-31)
+#  66 block SCSI disk devices (32-47)
+# ...
+#  71 block SCSI disk devices (112-127)
+# 128 block SCSI disk devices (128-143)
+# 129 block SCSI disk devices (144-159)
+# ...
+# 135 block SCSI disk devices (240-255)
+#
 
 LSBLK_ARGS="--pairs --noheadings"
 DRIVE_ARGS="$LSBLK_ARGS --nodeps"
