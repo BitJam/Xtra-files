@@ -30,7 +30,7 @@ Commands:
         List information for partitions on <device>.  Lists:
         name, size, filesystem type, and label.
 
-    all 
+    all
         Display the same information for all partitions on all devices
         (that have major device numbers on the list, see --major-num).
 
@@ -43,11 +43,11 @@ Options:
     -b --boot
         INCLUDE Live boot drive or partition.  Normally the drive and partition
         are both excluded.
-        
+
     -d  --dev-output
         Add /dev/ to device names in lists.
 
-    -e, --efi-filter  
+    -e, --efi-filter
         INCLUDE EFI partitions and Microsoft reserved and recovery partitions.
 
     -h, --help
@@ -136,7 +136,7 @@ read_params() {
         case $arg in
 
           # Add options to this list if the take a parameter
-          -major-num|-min-size|[mM]) 
+          -major-num|-min-size|[mM])
                 [ $# -lt 1 ] && fatal "Expected a parameter after: $(pqw -$arg)"
                 val=$1
                 [ -n "$val" -a -z "${val##-*}" ] \
@@ -171,7 +171,7 @@ do_drives() {
     else
         format="%-10s %8s  %6s  %6s  %5s  %16s  %s"
     fi
- 
+
     [ "$SHOW_HEADER" ] && printf "$format\n" Name Size Rotate Remove Parts Model Labels
 
     local line remove rotate
