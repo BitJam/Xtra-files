@@ -235,7 +235,7 @@ _do_parts() {
         format="%-10s %8s %10s %10s %s"
     fi
 
-    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size FStype Ptype Label
+    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size FS-type P-type Label
 
     local NAME SIZE FSTYPE PARTTYPE TYPE LABEL
     while read line; do
