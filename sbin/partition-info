@@ -178,6 +178,7 @@ read_params() {
              -major-num|M) MAJOR_LIST=$val    ;;
          -major-num=*|M=*) MAJOR_LIST=$val    ;;
                   -tabs|t) TAB_DELIMIT=true   ;;
+                        *) fatal "Unknown parameter -$arg"
         esac
     done
 }
