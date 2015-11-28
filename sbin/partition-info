@@ -155,10 +155,10 @@ read_params() {
 
           # Add options to this list if the take a parameter
           -major-num|-min-size|[mM])
-                [ $# -lt 1 ] && fatal "Expected a parameter after: $(pqw -$arg)"
+                [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
                 val=$1
                 [ -n "$val" -a -z "${val##-*}" ] \
-                    && fatal "Suspicious argument after -$arg: $(pqw $val)"
+                    && fatal "Suspicious argument after -$arg: $val"
                     SHIFT=$((shift + 1))
                     shift             ;;
 
