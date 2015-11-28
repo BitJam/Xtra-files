@@ -336,11 +336,13 @@ all_mountpoints() {
     local mps=$(lsblk -no mountpoint $drive | grep -v "^\[")
     echo $mps
 }
+
 all_labels() {
     local drive=$1
     local labels=$(lsblk -no label $drive | sed -r '/./ s/^|$/"/g')
     echo $labels
 }
+
 fatal() {
     echo "$ME fatal error: $*"
     exit 2
