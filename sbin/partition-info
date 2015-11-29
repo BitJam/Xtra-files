@@ -94,13 +94,14 @@ main() {
     [ $# -eq 0 ] && usage
 
     local SHIFT DEV_OUTPUT EFI_PARTS BOOT_PART MIN_SIZE TAB_DELIMIT
+    local SHORT_STACK="dehHmMt"
 
+    # Allow options before and after the command
     read_params "$@"
     shift $SHIFT
 
     [ $# -gt 0 ] || fatal "Expected a command or device name"
 
-    # Allow options before and after the command
     local cmnd=$1
     shift
 
@@ -108,7 +109,7 @@ main() {
     read_params "$@"
     shift $SHIFT
 
-    [ $# -gt 0 ] && fatal "Expected only one command. Got: $cmnd $1"
+    [ $# -gt 0 ] && fatal "Expected only one command. Got: $cmnd $*"
 
     # prepend MAJOR_LIST with "-I " if needed
     if [ -n "$MAJOR_LIST" ]; then
@@ -128,59 +129,28 @@ main() {
     esac
 }
 
-read_params() {
-    # Most of this code is boiler-plate for parsing cmdline args
-    SHIFT=0
-    # These are the single-char options that can stack
-    local short_stack="dehHmMt"
-
-    local arg val
-
-    # Loop through the cmdline args
-    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
-        arg=${1#-}
-        shift
-        SHIFT=$((SHIFT + 1))
-        # Expand stacked single-char arguments
+eval_argument() {
+    local arg=$1 val=$2
         case $arg in
-            [$short_stack][$short_stack]*)
-                if echo "$arg" | grep -q "^[$short_stack]\+$"; then
-                    set -- $(echo $arg | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
-                    continue
-                fi;;
-        esac
+              -boot|b) BOOT_PART=true     ;;
+        -dev-output|d) DEV_OUTPUT=/dev/   ;;
+        -efi-filter|e) EFI_PARTS=true     ;;
+              -help|h) usage              ;;
+            -header|H) SHOW_HEADER=true   ;;
+          -min-size|m) MIN_SIZE=$val      ;;
+      -min-size=*|m=*) MIN_SIZE=$val      ;;
+         -major-num|M) MAJOR_LIST=$val    ;;
+     -major-num=*|M=*) MAJOR_LIST=$val    ;;
+              -tabs|t) TAB_DELIMIT=true   ;;
+                    *) fatal "Unknown parameter -$arg"
+    esac
+}
 
-        # Deal with all options that take a parameter
-        case $arg in
-
-          # Add options to this list if the take a parameter
-          -major-num|-min-size|[mM])
-                [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
-                val=$1
-                [ -n "$val" -a -z "${val##-*}" ] \
-                    && fatal "Suspicious argument after -$arg: $val"
-                    SHIFT=$((shift + 1))
-                    shift             ;;
-
-                  *=*)  val=${arg#*=} ;;
-                    *)  val="???"     ;;
-        esac
-
-        # Edit this case statement when adding/removing options
-        case $arg in
-                  -boot|b) BOOT_PART=true     ;;
-            -dev-output|d) DEV_OUTPUT=/dev/   ;;
-            -efi-filter|e) EFI_PARTS=true     ;;
-                  -help|h) usage              ;;
-                -header|H) SHOW_HEADER=true   ;;
-              -min-size|m) MIN_SIZE=$val      ;;
-          -min-size=*|m=*) MIN_SIZE=$val      ;;
-             -major-num|M) MAJOR_LIST=$val    ;;
-         -major-num=*|M=*) MAJOR_LIST=$val    ;;
-                  -tabs|t) TAB_DELIMIT=true   ;;
-                        *) fatal "Unknown parameter -$arg"
-        esac
-    done
+takes_param() {
+    case $1 in
+        -major-num|-min-size|[mM]) return 0 ;;
+    esac
+    return 1
 }
 
 do_drives() {
@@ -347,5 +317,57 @@ fatal() {
     echo "$ME fatal error: $*"
     exit 2
 }
+
+#-------------------------------------------------------------------------------
+# Send "$@".  Expects
+#
+#   SHORT_STACK               variable, list of single chars that stack
+#   fatal(msg)                routine,  fatal("error message")
+#   takes_param(arg)          routine,  true if arg takes a value
+#   eval_argument(arg, [val]) routine,  do whatever you want with $arg and $val
+#
+# Sets "global" variable SHIFT to the number of arguments that have been read.
+#-------------------------------------------------------------------------------
+read_params() {
+    # Most of this code is boiler-plate for parsing cmdline args
+    SHIFT=0
+    # These are the single-char options that can stack
+
+    local arg val
+
+    # Loop through the cmdline args
+    while [ $# -gt 0 -a -n "$1" -a -z "${1##-*}" ]; do
+        arg=${1#-}
+        shift
+        SHIFT=$((SHIFT + 1))
+
+        # Expand stacked single-char arguments
+        case $arg in
+            [$SHORT_STACK][$SHORT_STACK]*)
+                if echo "$arg" | grep -q "^[$SHORT_STACK]\+$"; then
+                    set -- $(echo $arg | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
+                    continue
+                fi;;
+        esac
+
+        # Deal with all options that take a parameter
+        if takes_param "$arg"; then
+            [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
+            val=$1
+            [ -n "$val" -a -z "${val##-*}" ] \
+                && fatal "Suspicious argument after -$arg: $val"
+            SHIFT=$((SHIFT + 1))
+            shift
+        else
+            case $arg in
+                *=*)  val=${arg#*=} ;;
+                  *)  val="???"     ;;
+            esac
+        fi
+
+        eval_argument "$arg" "$val"
+    done
+}
+
 
 main "$@"
