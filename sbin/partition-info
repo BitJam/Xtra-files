@@ -357,7 +357,9 @@ read_params() {
         case $arg in
             [$SHORT_STACK][$SHORT_STACK]*)
                 if echo "$arg" | grep -q "^[$SHORT_STACK]\+$"; then
+                    local old_cnt=$#
                     set -- $(echo $arg | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
+                    SHIFT=$((SHIFT - $# + old_cnt))
                     continue
                 fi;;
         esac
