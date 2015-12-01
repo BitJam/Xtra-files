@@ -94,7 +94,7 @@ main() {
     [ $# -eq 0 ] && usage
 
     local SHIFT DEV_OUTPUT EFI_PARTS BOOT_PART MIN_SIZE TAB_DELIMIT
-    local SHORT_STACK="dehHmMt"
+    local SHORT_STACK="bdehHmMt"
 
     # Allow options before and after the command
     read_params "$@"
