@@ -59,20 +59,17 @@ Commands:
 Options:
 
     -b --boot
-        INCLUDE Live boot drive or partition.  Normally the drive and partition
+        EXCLUDE Live boot drive or partition.  Normally the drive and partition
         are both excluded.
 
     -d  --dev-output
         Add /dev/ to device names in lists.
 
     -e, --efi-filter
-        INCLUDE EFI partitions and Microsoft reserved and recovery partitions.
+        EXCLUDE EFI partitions and Microsoft reserved and recovery partitions.
 
     -h, --help
         Show this help.
-
-    -H --header
-        Show a header line labeling each field.
 
     -m <size>, --min-size=<size>
         Only display paritions (or drives) that have at least this many megabytes.
@@ -81,6 +78,9 @@ Options:
         Only display drives and partitions that have a major device number on
         this list.  Default: $MAJOR_LIST.  See the Linux Documentation file
         devices.txt for details on major device numbers.
+
+   -n, --noheadings
+        Don't show the header line
 
    -t --tabs
         Tab delimit output.
@@ -93,8 +93,9 @@ main() {
 
     [ $# -eq 0 ] && usage
 
-    local SHIFT DEV_OUTPUT EFI_PARTS BOOT_PART MIN_SIZE TAB_DELIMIT
-    local SHORT_STACK="bdehHmMt"
+    local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT
+    local BOOT_PART=true EFI_PARTS=true SHOW_HEADER=true
+    local SHORT_STACK="bdehmMnt"
 
     # Allow options before and after the command
     read_params "$@"
@@ -132,15 +133,15 @@ main() {
 eval_argument() {
     local arg=$1 val=$2
         case $arg in
-              -boot|b) BOOT_PART=true     ;;
+              -boot|b) BOOT_PART=         ;;
         -dev-output|d) DEV_OUTPUT=/dev/   ;;
-        -efi-filter|e) EFI_PARTS=true     ;;
+        -efi-filter|e) EFI_PARTS=         ;;
               -help|h) usage              ;;
-            -header|H) SHOW_HEADER=true   ;;
           -min-size|m) MIN_SIZE=$val      ;;
       -min-size=*|m=*) MIN_SIZE=$val      ;;
          -major-num|M) MAJOR_LIST=$val    ;;
      -major-num=*|M=*) MAJOR_LIST=$val    ;;
+        -noheadings|n) SHOW_HEADER=       ;;
               -tabs|t) TAB_DELIMIT=true   ;;
                     *) fatal "Unknown parameter -$arg"
     esac
