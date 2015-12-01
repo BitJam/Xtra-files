@@ -158,10 +158,10 @@ do_drives() {
     if [ "$TAB_DELIMIT" ]; then
         format="%s\t%s\t%s\t%s\t%s\t%s\t%s"
     else
-        format="%-10s %8s  %6s  %6s  %5s  %16s  %s"
+        format="%-10s %8s  %6s  %10s  %5s  %16s  %s"
     fi
 
-    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size Rotate Remove Parts Model Labels
+    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size Rotate USB/Remove Parts Model Labels
 
     local line remove rotate
     local NAME SIZE MODEL RM ROTA
@@ -182,6 +182,8 @@ do_drives() {
             1) remove=yes ;;
             *) remove="?" ;;
         esac
+
+        is_usb $NAME && remove=yes
 
         # The ROTA (rotational field) failed (was true) for my sandisk cruzer usb
         # so I use "?" for all removable drives.
@@ -278,6 +280,16 @@ get_size() {
     [ "$drive" != "$part" ] && path=$drive/$part
     local file=/sys/block/$path/size
     test -r $file && cat $file
+}
+
+is_usb() {
+    local dev=${1##*/}
+    local drive=$(echo $dev | sed -r 's/[0-9]+$//')
+    local dir=/sys/block/$drive
+    local devpath=$(readlink -f $dir/device)
+    [ "$devpath" ] || return 1
+    echo $devpath | grep -q /usb
+    return $?
 }
 
 contains_boot_partition() {
