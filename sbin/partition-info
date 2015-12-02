@@ -58,15 +58,15 @@ Commands:
 
 Options:
 
-    -b --boot-filter
-        EXCLUDE Live boot drive or partition.  Normally the drive and partition
-        are both excluded.
-
     -d  --dev-output
         Add /dev/ to device names in lists.
 
-    -e, --efi-filter
-        EXCLUDE EFI partitions and Microsoft reserved and recovery partitions.
+    -e --exclude=<param1,param2,...>
+        EXCLUDE certain types of partitions:
+            a, all  = all of the below
+            b, boot = LiveBoot device or partition
+            e, efi  = EFI and Microsoft reserved and recovery partitions
+            s, swap = Swap partitions
 
     -h, --help
         Show this help.
@@ -82,9 +82,6 @@ Options:
    -n, --noheadings
         Don't show the header line
 
-   -s, --swap-filter
-        EXCLUDE swap partitions from output
-
    -t --tabs
         Tab delimit output.
 Usage
@@ -96,9 +93,9 @@ main() {
 
     [ $# -eq 0 ] && usage
 
-    local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT
-    local BOOT_PARTS=true EFI_PARTS=true SWAP_PARTS=true SHOW_HEADER=true
-    local SHORT_STACK="bdehmMnst"
+    local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT EXCLUDE
+    local EX_BOOT EX_EFI EX_SWAP SHOW_HEADER=true
+    local SHORT_STACK="dehmMnt"
 
     # Allow options before and after the command
     read_params "$@"
@@ -115,6 +112,18 @@ main() {
 
     [ $# -gt 0 ] && fatal "Expected only one command. Got: $cmnd $*"
 
+    local ex_param
+    for ex_param in ${EXCLUDE/,/ /}; do
+        case $ex_param in
+            boot|b) EX_BOOT=true                                 ;;
+            swap|s) EX_SWAP=true                                 ;;
+             efi|e)  EX_EFI=true                                 ;;
+             all|a) EX_BOOT=true ; EX_SWAP=true ; EX_EFI=true    ;;
+                 *) fatal "Unknown exclude parameter: $ex_param" ;;
+        esac
+    done
+
+
     # prepend MAJOR_LIST with "-I " if needed
     if [ -n "$MAJOR_LIST" ]; then
         echo $MAJOR_LIST | grep -q "^[1-9][0-9,]*\+$" \
@@ -124,7 +133,7 @@ main() {
     fi
 
     # Get UUID of live boot partition into BOOT_UUID variable
-    [ -z "$BOOT_PARTS" ] && test -r $LIVE_CONFIG && eval $(grep ^BOOT_UUID= $LIVE_CONFIG)
+    [ "$EX_BOOT" ] && test -r $LIVE_CONFIG && eval $(grep ^BOOT_UUID= $LIVE_CONFIG)
 
     case $cmnd in
            all) do_all_parts    ;;
@@ -136,16 +145,15 @@ main() {
 eval_argument() {
     local arg=$1 val=$2
         case $arg in
-       -boot-filter|b) BOOT_PARTS=        ;;
         -dev-output|d) DEV_OUTPUT=/dev/   ;;
-        -efi-filter|e) EFI_PARTS=         ;;
               -help|h) usage              ;;
+           -exclude|e) EXCLUDE=$val       ;;
+       -exclude=*|e=*) EXCLUDE=$val       ;;
           -min-size|m) MIN_SIZE=$val      ;;
       -min-size=*|m=*) MIN_SIZE=$val      ;;
          -major-num|M) MAJOR_LIST=$val    ;;
      -major-num=*|M=*) MAJOR_LIST=$val    ;;
         -noheadings|n) SHOW_HEADER=       ;;
-       -swap-filter|s) SWAP_PARTS=        ;;
               -tabs|t) TAB_DELIMIT=true   ;;
                     *) fatal "Unknown parameter -$arg"
     esac
@@ -153,7 +161,7 @@ eval_argument() {
 
 takes_param() {
     case $1 in
-        -major-num|-min-size|[mM]) return 0 ;;
+        -exclude|-major-num|-min-size|[emM]) return 0 ;;
     esac
     return 1
 }
@@ -250,12 +258,12 @@ _do_parts() {
         # Ignore extended boot record partitions
         case $PARTTYPE in 0xf) continue;; esac
 
-        case $FSTYPE:$SWAP_PARTS in swap:) continue ;; esac
+        case $FSTYPE:$EX_SWAP in swap:true) continue ;; esac
 
         [ -n "$BOOT_UUID" -a "$BOOT_UUID" = "$UUID" ] && continue
 
-        # This will disable EFI/Win filtering of partition type
-        [ "$EFI_PARTS" ] || PARTTYPE=""
+        # EFI/Win can't be excluded if the PARTTYPE is empty
+        [ "$EX_EFI" ] || PARTTYPE=""
 
         # See:
         # https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_type_GUIDs
