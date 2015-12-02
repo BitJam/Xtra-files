@@ -68,6 +68,10 @@ Options:
             e, efi  = EFI and Microsoft reserved and recovery partitions
             s, swap = Swap partitions
 
+    -f, --full
+        Display more fields.  By default we only display the fields used by the
+        installer.
+
     -h, --help
         Show this help.
 
@@ -94,8 +98,8 @@ main() {
     [ $# -eq 0 ] && usage
 
     local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT EXCLUDE
-    local EX_BOOT EX_EFI EX_SWAP SHOW_HEADER=true
-    local SHORT_STACK="dehmMnt"
+    local EX_BOOT EX_EFI EX_SWAP FULL_FIELDS SHOW_HEADER=true
+    local SHORT_STACK="defhmMnt"
 
     # Allow options before and after the command
     read_params "$@"
@@ -149,6 +153,7 @@ eval_argument() {
               -help|h) usage              ;;
            -exclude|e) EXCLUDE=$val       ;;
        -exclude=*|e=*) EXCLUDE=$val       ;;
+              -full|f) FULL_FIELDS=true   ;;
           -min-size|m) MIN_SIZE=$val      ;;
       -min-size=*|m=*) MIN_SIZE=$val      ;;
          -major-num|M) MAJOR_LIST=$val    ;;
@@ -168,13 +173,18 @@ takes_param() {
 
 do_drives() {
 
-    if [ "$TAB_DELIMIT" ]; then
-        format="%s\t%s\t%s\t%s\t%s\t%s\t%s"
-    else
-        format="%-10s %8s  %6s  %10s  %5s  %16s  %s"
-    fi
+    local dev_width=$(get_dev_width $MAJOR_ARG --nodeps)
 
-    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size Rotate USB/Remove Parts Model Labels
+    case $TAB_DELIMIT:$FULL_FIELDS in
+        true:true) format="%s\t%s\t%s\t%s\t%s\t%s\t%s"                    ;;
+            :true) format="%-${dev_width}s %6s  %6s  %10s  %5s  %16s  %s" ;;
+            true:) format="%s\t%s\t%s"                                    ;;
+                :) format="%-${dev_width}s %6s %s"                        ;;
+    esac
+
+    local fields="Name Size Model"
+    [ "$FULL_FIELDS" ] && fields="Name Size Rotate USB/Remove Parts Model Labels"
+    [ "$SHOW_HEADER" ] && printf "$format\n" $fields
 
     local line remove rotate
     local NAME SIZE MODEL RM ROTA
@@ -209,7 +219,12 @@ do_drives() {
         local pcnt=$(count_partitions $dev)
         local labels=$(all_labels     $dev)
 
-        printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$rotate" "$remove" "$pcnt" "$MODEL" "$labels"
+        if [ "$FULL_FIELDS" ]; then
+            printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$rotate" "$remove" "$pcnt" "$MODEL" "$labels"
+        else
+            printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$MODEL"
+        fi
+
     done <<Do_Drives
 $(lsblk $MAJOR_ARG $DRIVE_ARGS --output $DRIVE_FIELDS)
 Do_Drives
