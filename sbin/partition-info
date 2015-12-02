@@ -335,6 +335,19 @@ all_mountpoints() {
     echo $mps
 }
 
+get_dev_width() {
+    local dev dwidth width=0
+    while read dev; do
+        dwidth=${#dev}
+        #echo "$dwidth: $dev" >&2
+        [ $width -lt $dwidth ] && width=$dwidth
+    done<<Get_Dev_Width
+$(lsblk --output name --list $*)
+Get_Dev_Width
+    [ "$DEV_OUTPUT" ] && width=$((width + ${#DEV_OUTPUT}))
+    echo $width
+
+}
 all_labels() {
     local drive=$1
     local labels=$(lsblk -no label $drive | sed -r '/./ s/^|$/"/g')
