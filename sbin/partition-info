@@ -82,6 +82,9 @@ Options:
    -n, --noheadings
         Don't show the header line
 
+   -s, --swap-filter
+        EXCLUDE swap partitions from output
+
    -t --tabs
         Tab delimit output.
 Usage
@@ -94,8 +97,8 @@ main() {
     [ $# -eq 0 ] && usage
 
     local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT
-    local BOOT_PART=true EFI_PARTS=true SHOW_HEADER=true
-    local SHORT_STACK="bdehmMnt"
+    local BOOT_PARTS=true EFI_PARTS=true SWAP_PARTS=true SHOW_HEADER=true
+    local SHORT_STACK="bdehmMnst"
 
     # Allow options before and after the command
     read_params "$@"
@@ -121,7 +124,7 @@ main() {
     fi
 
     # Get UUID of live boot partition into BOOT_UUID variable
-    [ -z "$BOOT_PART" ] && test -r $LIVE_CONFIG && eval $(grep ^BOOT_UUID= $LIVE_CONFIG)
+    [ -z "$BOOT_PARTS" ] && test -r $LIVE_CONFIG && eval $(grep ^BOOT_UUID= $LIVE_CONFIG)
 
     case $cmnd in
            all) do_all_parts    ;;
@@ -142,6 +145,7 @@ eval_argument() {
          -major-num|M) MAJOR_LIST=$val    ;;
      -major-num=*|M=*) MAJOR_LIST=$val    ;;
         -noheadings|n) SHOW_HEADER=       ;;
+       -swap-filter|s) SWAP_PARTS=        ;;
               -tabs|t) TAB_DELIMIT=true   ;;
                     *) fatal "Unknown parameter -$arg"
     esac
@@ -246,7 +250,7 @@ _do_parts() {
         # Ignore extended boot record partitions
         case $PARTTYPE in 0xf) continue;; esac
 
-        case $FSTYPE in swap) continue ;; esac
+        case $FSTYPE:$SWAP_PARTS in swap:) continue ;; esac
 
         [ -n "$BOOT_UUID" -a "$BOOT_UUID" = "$UUID" ] && continue
 
