@@ -46,15 +46,18 @@ Commands:
 
     <device>  (/dev/sda or sda, etc)
         List information for partitions on <device>.  Lists:
-        name, size, filesystem type, and label.
+          name, size, filesystem-type, and label.
 
     all
         Display the same information for all partitions on all devices
         (that have major device numbers on the list, see --major-num).
 
     drives
-        Only display information for drives, not partitions.  Lists:
-        name, size, rotational, removeable, and model
+        Display information for drives, not partitions.  By default list:
+          name, size, and model
+
+        If --full is given then list:
+          name, size, rotational, remove/usb, # of parts, model, and labels
 
 Options:
 
