@@ -58,7 +58,7 @@ Commands:
 
 Options:
 
-    -b --boot
+    -b --boot-filter
         EXCLUDE Live boot drive or partition.  Normally the drive and partition
         are both excluded.
 
@@ -133,7 +133,7 @@ main() {
 eval_argument() {
     local arg=$1 val=$2
         case $arg in
-              -boot|b) BOOT_PART=         ;;
+       -boot-filter|b) BOOT_PARTS=        ;;
         -dev-output|d) DEV_OUTPUT=/dev/   ;;
         -efi-filter|e) EFI_PARTS=         ;;
               -help|h) usage              ;;
