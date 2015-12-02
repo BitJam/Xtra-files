@@ -231,7 +231,7 @@ _do_parts() {
 
     local NAME SIZE FSTYPE PARTTYPE TYPE LABEL
     while read line; do
-        [ -n "$line" -a -z "${line##NAME=*}" ] || continue
+        [ ${#line} -gt 0 -a -z "${line##NAME=*}" ] || continue
 
         # Note that lsblk escapes double-quotes and dollar signs when --pairs
         # is used which makes doing the eval safe
