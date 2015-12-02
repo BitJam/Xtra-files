@@ -26,7 +26,7 @@ MAJOR_LIST="3,8,22,179"
 LSBLK_ARGS="--pairs --noheadings"
 DRIVE_ARGS="$LSBLK_ARGS --nodeps"
 DRIVE_FIELDS="name,size,rota,rm,uuid,model"
-PARTS_FIELDS="name,size,fstype,parttype,type,uuid,label"
+PARTS_FIELDS="name,size,fstype,parttype,type,uuid"
 
 LIVE_CONFIG=/live/config/initrd.out
 
@@ -268,7 +268,10 @@ _do_parts() {
 
         greater_than_min_size $NAME || continue
 
-        printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$FSTYPE" "$TYPE" "$LABEL"
+        # This is slower but it preserves special chars in labels
+        local label=$(lsblk /dev/$NAME -no label)
+
+        printf "$format\n" "$DEV_OUTPUT$NAME" "$SIZE" "$FSTYPE" "$TYPE" "$label"
     done<<Lsblk
     $(lsblk $MAJOR_ARG $LSBLK_ARGS --output $PARTS_FIELDS $the_dev)
 Lsblk
