@@ -61,10 +61,10 @@ Commands:
 
 Options:
 
-    -d  --dev-output
+    -d, --dev-output
         Add /dev/ to device names in lists.
 
-    -e --exclude=<param1,param2,...>
+    -e, --exclude=<param1,param2,...>
         EXCLUDE certain types of partitions:
             a, all  = all of the below
             b, boot = LiveBoot device or partition
@@ -78,18 +78,18 @@ Options:
     -h, --help
         Show this help.
 
-    -m <size>, --min-size=<size>
+    -m, --min-size=<size>
         Only display paritions (or drives) that have at least this many megabytes.
 
-    -M <list>, --major-num=<list>
+    -M, --major-num=<list>
         Only display drives and partitions that have a major device number on
         this list.  Default: $MAJOR_LIST.  See the Linux Documentation file
         devices.txt for details on major device numbers.
 
-   -n, --noheadings
+    -n, --noheadings
         Don't show the header line
 
-   -t --tabs
+    -t, --tabs
         Tab delimit output.
 Usage
 
