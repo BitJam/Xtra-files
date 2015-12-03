@@ -89,6 +89,9 @@ Options:
     -n, --noheadings
         Don't show the header line
 
+    -s, --simplify
+        Simplify the names of some filesystem: vfat, hfsplus, ntfs-3g.
+
     -t, --tabs
         Tab delimit output.
 Usage
@@ -100,9 +103,9 @@ main() {
 
     [ $# -eq 0 ] && usage
 
-    local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT EXCLUDE
+    local SHIFT DEV_OUTPUT MIN_SIZE TAB_DELIMIT EXCLUDE SIMPLIFY
     local EX_BOOT EX_EFI EX_SWAP FULL_FIELDS SHOW_HEADER=true
-    local SHORT_STACK="defhmMnt"
+    local SHORT_STACK="defhmMnst"
 
     # Allow options before and after the command
     read_params "$@"
@@ -162,6 +165,7 @@ eval_argument() {
          -major-num|M) MAJOR_LIST=$val    ;;
      -major-num=*|M=*) MAJOR_LIST=$val    ;;
         -noheadings|n) SHOW_HEADER=       ;;
+          -simplify|s) SIMPLIFY=true      ;;
               -tabs|t) TAB_DELIMIT=true   ;;
                     *) fatal "Unknown parameter -$arg"
     esac
@@ -300,6 +304,13 @@ _do_parts() {
 
         greater_than_min_size $NAME || continue
 
+        if [ "$SIMPLIFY" ]; then
+            case $FSTYPE in
+                ntfs-3g) FSTYPE=NTFS  ;;
+                   vfat) FSTYPE=Fat32 ;;  # ???
+                hfsplus) FSTYPE=HPFS  ;;
+            esac
+        fi
         # This is slower but it preserves special chars in labels
         local label=$(lsblk /dev/$NAME -no label)
 
