@@ -72,14 +72,14 @@ Options:
             s, swap = Swap partitions
 
     -f, --full
-        Display more fields.  By default we only display the fields used by the
-        installer.
+        Display more fields for drives.  By default we only display the fields
+        used by the installer.
 
     -h, --help
         Show this help.
 
     -m, --min-size=<size>
-        Only display paritions (or drives) that have at least this many megabytes.
+        Exclude partitions (or drives) that have less than this many megabytes.
 
     -M, --major-num=<list>
         Only display drives and partitions that have a major device number on
