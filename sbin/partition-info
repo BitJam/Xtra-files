@@ -260,7 +260,7 @@ _do_parts() {
     if [ "$TAB_DELIMIT" ]; then
         format="%s\t%s\t%s\t%s"
     else
-        format="%-${dev_width}s %6s %10s %s"
+        format="%-${dev_width}s %6s %-10s %s"
     fi
 
     [ "$SHOW_HEADER" ] && printf "$format\n" Name Size FS-type Label
