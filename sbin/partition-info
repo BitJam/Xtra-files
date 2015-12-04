@@ -261,15 +261,16 @@ _do_parts() {
     [ "$ONLY_SWAP" ]  && EX_SWAP=
 
     local dev_width=$(get_dev_width $MAJOR_ARG $the_dev)
+    local  fs_width=$(get_field_width fstype -n $MAJOR_ARG $the_dev)
 
     local format
     if [ "$TAB_DELIMIT" ]; then
         format="%s\t%s\t%s\t%s"
     else
-        format="%-${dev_width}s - %6s - %-10s - %s"
+        format="%-${dev_width}s - %6s - %-${fs_width}s - %s"
     fi
 
-    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size FS-type Label
+    [ "$SHOW_HEADER" ] && printf "$format\n" Name Size FS Label | sed 's/ - /   /g'
 
     local NAME SIZE FSTYPE PARTTYPE TYPE LABEL
     while read line; do
@@ -374,19 +375,37 @@ all_mountpoints() {
     echo $mps
 }
 
-get_dev_width() {
-    local dev dwidth width=0
-    while read dev; do
-        dwidth=${#dev}
+get_field_width() {
+    local name=$1  field fwidth width=0
+    shift
+    while read field; do
+
+        if [ "$SIMPLIFY" -a "$name" = fstype ]; then
+            case $field in
+                ntfs-3g) field=NTFS  ;;
+                   vfat) field=Fat32 ;;  # ???
+                hfsplus) field=HPFS  ;;
+            esac
+        fi
+
+        echo $field >&2
+
+        fwidth=${#field}
         #echo "$dwidth: $dev" >&2
-        [ $width -lt $dwidth ] && width=$dwidth
-    done<<Get_Dev_Width
-$(lsblk --output name --list $*)
-Get_Dev_Width
+        [ $width -lt $fwidth ] && width=$fwidth
+    done<<Get_Field_Width
+$(lsblk --output $name --list $*)
+Get_Field_Width
+    echo $width
+}
+
+get_dev_width() {
+    local width=$(get_field_width name $*)
     [ "$DEV_OUTPUT" ] && width=$((width + ${#DEV_OUTPUT}))
     echo $width
-
 }
+
+
 all_labels() {
     local drive=$1
     local labels=$(lsblk -no label $drive | sed -r '/./ s/^|$/"/g')
