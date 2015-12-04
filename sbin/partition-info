@@ -387,11 +387,7 @@ get_field_width() {
                 hfsplus) field=HPFS  ;;
             esac
         fi
-
-        echo $field >&2
-
         fwidth=${#field}
-        #echo "$dwidth: $dev" >&2
         [ $width -lt $fwidth ] && width=$fwidth
     done<<Get_Field_Width
 $(lsblk --output $name --list $*)
