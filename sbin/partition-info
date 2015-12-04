@@ -59,6 +59,9 @@ Commands:
         If --full is given then list:
           name, size, rotational, remove/usb, # of parts, model, and labels
 
+    swap
+        Display information for all swap partitions
+
 Options:
 
     -d, --dev-output
@@ -148,6 +151,7 @@ main() {
     case $cmnd in
            all) do_all_parts    ;;
         drives) do_drives       ;;
+          swap) ONLY_SWAP=true; do_all_parts ;;
              *) do_parts $cmnd  ;;
     esac
 }
@@ -254,6 +258,8 @@ do_parts() {
 _do_parts() {
     local the_dev=$1
 
+    [ "$ONLY_SWAP" ]  && EX_SWAP=
+
     local dev_width=$(get_dev_width $MAJOR_ARG $the_dev)
 
     local format
@@ -281,6 +287,8 @@ _do_parts() {
 
         # Ignore extended boot record partitions
         case $PARTTYPE in 0xf) continue;; esac
+
+        [ "$ONLY_SWAP" -a "$FSTYPE" != "swap" ] && continue
 
         case $FSTYPE:$EX_SWAP in swap:true) continue ;; esac
 
