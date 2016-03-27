@@ -1,0 +1,16 @@
+1:default
+2:desktop=rox-icewm
+3:desktop=space-icewm
+4:desktop=icewm
+5:desktop=rox-fluxbox
+6:desktop=space-fluxbox
+7:desktop=fluxbox
+8:desktop=rox-jwm
+9:desktop=space-jwm
+10:desktop=jwm
+11:desktop=min-herbstluftwm
+12:desktop=min-icewm
+13:desktop=min-fluxbox
+14:desktop=min-jwm
+15:desktheme=dark
+16:desktheme=light
