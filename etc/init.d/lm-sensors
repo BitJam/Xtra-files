@@ -25,9 +25,10 @@ case "$1" in
 		/usr/bin/sensors -s 1> /dev/null 2> /dev/null
 		/usr/bin/sensors 1> /dev/null 2> /dev/null
 	else
-        log_file=/var/log/${0##*/}.log
-		/usr/bin/sensors -s >$log_file 2>&1
-		/usr/bin/sensors > /dev/null 2>>$log_file
+        LOG_FILE=/var/log/live/${0##*/}.log
+        mkdir -p $(dirname $LOG_FILE)
+		/usr/bin/sensors -s >$LOG_FILE 2>&1
+		/usr/bin/sensors > /dev/null 2>>$LOG_FILE
 	fi
 	log_end_msg 0
 	;;

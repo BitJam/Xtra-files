@@ -23,7 +23,7 @@ CONFIGURE_INTERFACES=yes
 EXCLUDE_INTERFACES=
 VERBOSE=no
 
-LOG_FILE=/var/log/${0##*/}.log
+LOG_FILE=/var/log/live/${0##*/}.log
 
 [ -f /etc/default/networking ] && . /etc/default/networking
 
@@ -146,6 +146,7 @@ start)
 		fi
 	fi
 	rm -f $LOG_FILE
+	mkdir -p $(dirname $LOG_FILE)
 	if ifup -a $exclusions $verbose >$LOG_FILE 2>&1 && ifup_hotplug $exclusions $verbose >>$LOG_FILE 2>&1
 	then
 	    log_action_end_msg $?
