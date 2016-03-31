@@ -22,6 +22,7 @@ NAME=cron
 DAEMON=/usr/sbin/cron
 PIDFILE=/var/run/crond.pid
 SCRIPTNAME=/etc/init.d/"$NAME"
+DISABLED_CONF=/live/config/disabled
 
 test -f $DAEMON || exit 0
 
@@ -61,8 +62,6 @@ parse_environment ()
 if [ "$READ_ENV" = "yes" ] ; then
     parse_environment
 fi
-
-DISABLED_CONF=/live/config/disabled
 
 case "$1" in
 start)	log_daemon_msg "Starting periodic command scheduler" "cron"
