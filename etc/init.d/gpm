@@ -60,7 +60,8 @@ gpm_strace () {
 
 gpm_start () {
 
-  test -r $DISABLED_CONF && sed -i "/^${0##*/}$/d" $DISABLED_CONF
+  me=${0##*/}
+  test -r $DISABLED_CONF && sed -r -i "s/^($me)$/# \1/" $DISABLED_CONF
 
   log_daemon_msg "Starting mouse interface server" "gpm"
   # HACK - kernel module init is asynchronous in kernel 2.6, EVEN FROM

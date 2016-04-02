@@ -82,7 +82,9 @@ wipe_runtime_directories()
 
 case "$1" in
   start)
-        test -r $DISABLED_CONF && sed -i "/^${0##*/}$/d" $DISABLED_CONF
+
+        me=${0##*/}
+        test -r $DISABLED_CONF && sed -r -i "s/^($me)$/# \1/" $DISABLED_CONF
 	# The "start" method should only be used at boot time.
 	# Don't run this on package upgrade, for example.
 	log_action_begin_msg "Setting up resolvconf"

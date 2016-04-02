@@ -66,7 +66,8 @@ fi
 case "$1" in
 start)	log_daemon_msg "Starting periodic command scheduler" "cron"
 
-        test -r $DISABLED_CONF && sed -i "/^${0##*/}$/d" $DISABLED_CONF
+        me=${0##*/}
+        test -r $DISABLED_CONF && sed -r -i "s/^($me)$/# \1/" $DISABLED_CONF
 
         start_daemon -p $PIDFILE $DAEMON $EXTRA_OPTS
         log_end_msg $?
