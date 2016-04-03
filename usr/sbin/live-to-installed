@@ -75,6 +75,7 @@ main() {
     rm_dir        var/log/live
     clear_files   var/log
 
+    ROOT=$IDIR /live/etc/init.d/live-disable-services stop
 }
 
 #----------------------------------------------------------------------
