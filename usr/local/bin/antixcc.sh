@@ -112,7 +112,7 @@ Edit_Excludes
 Persist_Save
 )
 
-[ -e /live/config/remasterable -o -e /live/config/remaster-live.conf ] && live_remaster=$(cat <<Live_Remaster
+[ -e /etc/live/config/remasterable -o -e /live/config/remasterable ] && live_remaster=$(cat <<Live_Remaster
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
