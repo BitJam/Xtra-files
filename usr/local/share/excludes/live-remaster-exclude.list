@@ -9,6 +9,7 @@ dev/.[^.]*
 etc/defaultdomain
 etc/fstab.*
 etc/ioctl.save
+etc/issue
 etc/mtab
 etc/live/live-dir
 etc/live/protect/remaster

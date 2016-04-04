@@ -18,6 +18,7 @@ etc/blkid.tab.old
 etc/defaultdomain
 etc/fstab.backup
 etc/ioctl.save
+etc/issue
 etc/live/protect
 etc/mailname
 etc/mtab
