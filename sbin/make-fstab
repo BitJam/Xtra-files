@@ -58,7 +58,6 @@ usage() {
     cat << Usage
 Usage: $ME [options]
 Options:
-  -b --bg                 Run "mount" and "umount" in a background process
   -c --create             Force normal mode
   -d --dirs=<options>     Create mountpoint directories based on:
                           label|nolabel|uuid|nouuid|encode|noencode
@@ -121,7 +120,6 @@ read_cmdline() {
         esac
 
         case $arg in
-                               -bg|b)         IN_BG=true  ;;
                            -create|c)   UPDATE_MODE=      ;;
                              -delete)   DELETE_MODE=true  ;;
                  -dirs=*|d=*|-dirs|d)      CMD_DIRS=$val  ;;
@@ -199,7 +197,7 @@ main() {
     if [ "$UPDATE_MODE" ]; then
 
         [ "$DEVNAME" ]       || vamoose "no device name"
-        [ "$ID_FS_UUID" ]    || vamoose "$DEVNAME: no filesystem uuid"
+        [ "$ID_FS_UUID" ]    || vamoose "$ACTION $DEVNAME: no filesystem uuid"
         [ -e $HOTPLUG_FILE ] || vamoose "no fstab.hotplug file"
 
         CMD_DIRS="$CMD_DIRS,$(cat $HOTPLUG_FILE 2>/dev/null)"
@@ -247,6 +245,8 @@ do_update_mode() {
 
     local dev="$DEVNAME" type="$ID_FS_TYPE" uuid="$ID_FS_UUID" label="$ID_FS_LABEL"
 
+    local act
+
     if [ "$DO_ENCODE" ]; then
         uuid=$ID_FS_UUID_ENC
         label=$ID_FS_LABEL_ENC
@@ -293,20 +293,25 @@ do_update_mode() {
                *) mkdir -p $mntpnt ;;
         esac
 
-        case "$type" in
+        case $type in
             ntfs*)  chmod 0777 $mntpnt
                     [ "$AM_ROOT" ] && chown root:users $mntpnt ;;
         esac
 
-        [ -e $AUTOMOUNT_FILE -a -n "$AM_ROOT" ] && launch mount $mntpnt
-
+        if [ -e $AUTOMOUNT_FILE -a -n "$AM_ROOT" ]; then
+            case $type in
+                ntfs|exfat) ;;
+                         *) mount $mntpnt ; act="mount $mntpnt";;
+                esac
+        fi
         ;;
 
     remove)
         # First unmount the device but it is probably already way too late
         if grep -q "^$dev " /proc/mounts; then
-            log "umount $dev"
+            #log "umount $dev"
             umount -drf $dev 1>/dev/null 2>/dev/null
+            act="umount -drf $dev"
             grep -q "^$dev " /proc/mounts && umount -l $dev 1>/dev/null 2>/dev/null
         fi
 
@@ -336,7 +341,7 @@ do_update_mode() {
     local end_t=$(cut -d" " -f22 /proc/self/stat)
     local dt1=$((now_t - start_t))
     local dt2=$((end_t - now_t))
-    log "%s\n@%10d  dt1:%4d  dt2:%4d\n" "$ACTION:$dev fs=$type  lab=$label" $start_t $dt1 $dt2
+    log "%-6s %12s %8s %16s  @%10d  %4d  %4d %s" "$ACTION" "$dev" "$type"  "$label" $start_t $dt1 $dt2 "$act"
 }
 
 #------------------------------------------------------------------------------
@@ -822,14 +827,6 @@ HEADER
     echo
 }
 
-launch() {
-    if [ "$IN_BG" ]; then
-        "$@" </dev/null >/dev/null 2>&1 &
-    else
-        "$@"
-    fi
-}
-
 #==============================================================================
 # Basic Output and Error Routines
 #==============================================================================
@@ -866,7 +863,7 @@ arg_fatal() {
 # Then exit.
 #------------------------------------------------------------------------------
 vamoose() {
-    local msg="$(printf "Exit because: $@")"
+    local msg="$(printf "Exit: $@")"
     log "$msg"
     [ "$VERBOSE" ] && echo "  $ME: $msg"
     exit 0
