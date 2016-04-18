@@ -145,7 +145,6 @@ main() {
 
 replace_line() {
     local regex=$1 file=$2
-    # We are called by del_line_skel which already adds $IDIR
     [ -z "${file##/*}" ] || file=$DIR/$file
     test -e "$file" || return
 
