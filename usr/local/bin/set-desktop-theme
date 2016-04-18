@@ -122,11 +122,12 @@ main() {
 
     replace_line "s|^\s*(theme=\s*).*|\1$TRAY_ICON|" .config/volumeicon/volumeicon
 
-    test -r "$WALLPAPER" \
-        && replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" .desktop-session/wallpaper-list.conf
-           replace_line "s|^\s*(DEFAULT=\s*).*|\1$WALLPAPER|" .desktop-session/wallpaper.conf
-           replace_line "s|^\s*(wallpaper=\s*).*|\1$WALLPAPER|" .config/spacefm/session
-           #replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" $ROX_DIR/pb_antiX-$wm
+    if test -r "$WALLPAPER"; then
+        replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|"      .desktop-session/wallpaper-list.conf
+        replace_line "s|^\s*(DEFAULT=\s*).*|\1$WALLPAPER|"   .desktop-session/wallpaper.conf
+        replace_line "s|^\s*(wallpaper=\s*).*|\1$WALLPAPER|" .config/spacefm/session
+        #replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" $ROX_DIR/pb_antiX-$wm
+    fi
 
     #test geany
     replace_line "s|^\s*(color_scheme=\s*).*|\1$GEANY_THEME|" .config/geany/geany.conf
