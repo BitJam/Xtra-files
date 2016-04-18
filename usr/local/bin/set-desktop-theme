@@ -1,24 +1,26 @@
 #!/bin/bash
 
 
-VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME WALLPAPER"
+VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME WALLPAPER GEANY_THEME"
 
-        DARK_ICONS="Faenza-Cupertino-mini"
-    DARK_GTK_THEME="MediterraneanGrayDark"
-   DARK_FLUX_THEME="/usr/share/fluxbox/styles/antiX"
-  DARK_ICEWM_THEME="icegil-remix/default.theme"
-    DARK_TRAY_ICON="Default"
+        DARK_ICONS="BRIT-ICONS"
+    DARK_GTK_THEME="MediterraneanDark"
+   DARK_FLUX_THEME="/usr/share/fluxbox/styles/antiX-Medium"
+  DARK_ICEWM_THEME="icegil-remix-medium/default.theme"
+    DARK_TRAY_ICON="White Gnome"
  DARK_CURSOR_THEME="DMZ-White"
-    DARK_WALLPAPER="/usr/share/wallpaper/Consuming_the_light_side.jpg"
+    DARK_WALLPAPER="/usr/share/wallpaper/antiX-galaxy4.jpg"
+   DARK_GEANY_THEME="zenburn.conf"
 
        LIGHT_ICONS="Faenza-Cupertino-mini"
    LIGHT_GTK_THEME="MediterraneanWhite"
   LIGHT_GTK3_THEME="clearlooks-phenix"
-  LIGHT_FLUX_THEME="/usr/share/fluxbox/styles/Radiant-antiX"
- LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
+  LIGHT_FLUX_THEME="/usr/share/fluxbox/styles/Radiant-antiX-Medium"
+ LIGHT_ICEWM_THEME="Clearview Blue Medium/default.theme"
    LIGHT_TRAY_ICON="Black Gnome"
 LIGHT_CURSOR_THEME="DMZ-Black"
    LIGHT_WALLPAPER="/usr/share/wallpaper/shells-massage-therapy-sand.jpg"
+ LIGHT_GEANY_THEME=""
 
 ROX_DIR=".config/rox.sourceforge.net/ROX-Filer"
 ROOT_DIR="/root"
@@ -110,7 +112,7 @@ main() {
     replace_line "s|^\s*(Theme=\")[^\"]*(\").*|\1$ICEWM_THEME\2|"                   .icewm/theme
     replace_line "s|^\s*(session.styleFile:\s+).*|\1$FLUX_THEME|"                   .fluxbox/init
     replace_line "s|^(\s*<Option name=\"icon_theme\">)[^<]*(</Option>)|\1$ICONS\2|" $ROX_DIR/Options
-    replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|"               .gtkrc-2.0   
+    replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|"               .gtkrc-2.0
     replace_line "s|^\s*(gtk-icon-theme-name=)(\"?).*\2\s*|\1\2$ICONS\2|"           .gtkrc-2.0
     replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|"               .config/gtk-3.0/settings.ini
     replace_line "s|^\s*(gtk-icon-theme-name=)(\"?).*\2\s*|\1\2$ICONS\2|"           .config/gtk-3.0/settings.ini
@@ -122,6 +124,12 @@ main() {
 
     test -r "$WALLPAPER" \
         && replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" .desktop-session/wallpaper-list.conf
+           replace_line "s|^\s*(DEFAULT=\s*).*|\1$WALLPAPER|" .desktop-session/wallpaper.conf
+           replace_line "s|^\s*(wallpaper=\s*).*|\1$WALLPAPER|" .config/spacefm/session
+           #replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" $ROX_DIR/pb_antiX-$wm
+
+    #test geany
+    replace_line "s|^\s*(color_scheme=\s*).*|\1$GEANY_THEME|" .config/geany/geany.conf
 
     replace_file $theme .dillo/style.css
     replace_file $theme .jwm/theme
