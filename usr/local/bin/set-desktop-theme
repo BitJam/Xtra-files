@@ -102,7 +102,8 @@ main() {
         replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|" $ROOT_DIR/.gtkrc-2.0
         replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK3_THEME\2|" $ROOT_DIR/.config/gtk-3.0/settings.ini
         #replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|" $ROOT_DIR/.config/gtk-3.0/settings.ini
-        pretend ln -sf /usr/share/icons/$CURSOR_THEME/cursor.theme /etc/alternatives/x-cursor-theme
+        cursor_file="/usr/share/icons/$CURSOR_THEME/cursor.theme"
+        test -e $cursor_file && pretend ln -sf $cursor_file /etc/alternatives/x-cursor-theme
         exit 0
     fi
 
@@ -119,7 +120,9 @@ main() {
 
     replace_line "s|^\s*(theme=\s*).*|\1$TRAY_ICON|" .config/volumeicon/volumeicon
 
-    replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" .desktop-session/wallpaper-list.conf
+    test -r "$WALLPAPER" \
+        && replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" .desktop-session/wallpaper-list.conf
+
     replace_file $theme .dillo/style.css
     replace_file $theme .jwm/theme
     replace_file $theme $ROX_DIR/Options
