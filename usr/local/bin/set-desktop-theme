@@ -100,7 +100,8 @@ main() {
         test -w $ROOT_DIR || fatal "Can't write to $ROOT_DIR"
         replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|" $ROOT_DIR/.gtkrc-2.0
         replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK3_THEME\2|" $ROOT_DIR/.config/gtk-3.0/settings.ini
-        replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|" $ROOT_DIR/.config/gtk-3.0/settings.ini
+        #replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|" $ROOT_DIR/.config/gtk-3.0/settings.ini
+        pretend ln -sf /usr/share/icons/$CURSOR_THEME/cursor.theme /etc/alternatives/x-cursor-theme
         exit 0
     fi
 
@@ -112,8 +113,8 @@ main() {
     replace_line "s|^\s*(gtk-theme-name=)(\"?).*\2|\1\2$GTK_THEME\2|"               .config/gtk-3.0/settings.ini
     replace_line "s|^\s*(gtk-icon-theme-name=)(\"?).*\2\s*|\1\2$ICONS\2|"           .config/gtk-3.0/settings.ini
 
-    replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|"  .gtkrc-2.0
-    replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|"  .config/gtk-3.0/settings.ini
+    #replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|"  .gtkrc-2.0
+    #replace_line "s|^\s*(gtk-cursor-theme-name=)(\"?).*\2\s*|\1\2$CURSOR_THEME\2|"  .config/gtk-3.0/settings.ini
 
     replace_line "s|^\s*(theme=\s*).*|\1$TRAY_ICON|" .config/volumeicon/volumeicon
 
@@ -165,6 +166,14 @@ replace_file() {
 
     [ "$PRETEND" ] && return
     $cmd $new $file
+}
+
+pretend() {
+    if [ "$PRETEND" -o "$VERBOSE" ]; then
+        echo "$@"
+    fi
+    [ "$PRETEND" ] && return
+    "$@"
 }
 
 restart_desktop() {
