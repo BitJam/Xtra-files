@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME"
+VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME WALLPAPER"
 
         DARK_ICONS="Faenza-Cupertino-mini"
     DARK_GTK_THEME="MediterraneanGrayDark"
@@ -9,6 +9,7 @@ VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME"
   DARK_ICEWM_THEME="icegil-remix/default.theme"
     DARK_TRAY_ICON="Default"
  DARK_CURSOR_THEME="DMZ-White"
+    DARK_WALLPAPER="/usr/share/wallpaper/Consuming_the_light_side.jpg"
 
        LIGHT_ICONS="Faenza-Cupertino-mini"
    LIGHT_GTK_THEME="MediterraneanWhite"
@@ -17,7 +18,7 @@ VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME"
  LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
    LIGHT_TRAY_ICON="Black Gnome"
 LIGHT_CURSOR_THEME="DMZ-Dark"
-
+   LIGHT_WALLPAPER="/usr/share/wallpaper/shells-massage-therapy-sand.jpg"
 
 ROX_DIR=".config/rox.sourceforge.net/ROX-Filer"
 ROOT_DIR="/root"
@@ -118,6 +119,7 @@ main() {
 
     replace_line "s|^\s*(theme=\s*).*|\1$TRAY_ICON|" .config/volumeicon/volumeicon
 
+    replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" .desktop-session/wallpaper-list.conf
     replace_file $theme .dillo/style.css
     replace_file $theme .jwm/theme
     replace_file $theme $ROX_DIR/Options
