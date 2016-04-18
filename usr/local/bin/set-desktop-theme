@@ -17,7 +17,7 @@ VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME W
   LIGHT_FLUX_THEME="/usr/share/fluxbox/styles/Radiant-antiX"
  LIGHT_ICEWM_THEME="IceClearlooks/default.theme"
    LIGHT_TRAY_ICON="Black Gnome"
-LIGHT_CURSOR_THEME="DMZ-Dark"
+LIGHT_CURSOR_THEME="DMZ-Black"
    LIGHT_WALLPAPER="/usr/share/wallpaper/shells-massage-therapy-sand.jpg"
 
 ROX_DIR=".config/rox.sourceforge.net/ROX-Filer"
