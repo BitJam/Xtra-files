@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+W_MANAGERS="fluxbox icewm jwm"
 VARS="ICONS GTK_THEME GTK3_THEME FLUX_THEME ICEWM_THEME TRAY_ICON CURSOR_THEME WALLPAPER GEANY_THEME"
 
         DARK_ICONS="BRIT-ICONS"
@@ -126,7 +126,7 @@ main() {
         replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|"      .desktop-session/wallpaper-list.conf
         replace_line "s|^\s*(DEFAULT=\s*).*|\1$WALLPAPER|"   .desktop-session/wallpaper.conf
         replace_line "s|^\s*(wallpaper=\s*).*|\1$WALLPAPER|" .config/spacefm/session
-        #replace_line "s|^\s*([a-z-]+=).*|\1$WALLPAPER|" $ROX_DIR/pb_antiX-$wm
+        replace_line_wm "s|^(\s*<backdrop[^>]*>)[^<]*(</backdrop>).*|\1$WALLPAPER\2|" .config/rox.sourceforge.net/ROX-Filer/pb_antiX-%s
     fi
 
     #test geany
@@ -180,6 +180,23 @@ replace_file() {
 
     [ "$PRETEND" ] && return
     $cmd $new $file
+}
+
+replace_line_wm() {
+    local file regex=$1 spec=$2
+    while read file; do
+        [ -z "$file" ] && continue
+        replace_line "$regex" "$file"
+    done<< Wm_Files
+$(wm_files $spec)
+Wm_Files
+}
+
+wm_files() {
+    local wm str=$1
+    for wm in $W_MANAGERS; do
+        printf "$str\n" $wm
+    done
 }
 
 pretend() {
