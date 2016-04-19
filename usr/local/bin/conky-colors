@@ -138,6 +138,7 @@ Options:
     -f --file=<file>   Makes change to <file> instead of .conkyrc
     -h --help          Show this help
     -p --pretend       Show changes but don't do anything
+    -r --reload        Reload conky (usually this is not needed)
     -q --quiet         Only print error messages
 Usage
 
@@ -168,6 +169,7 @@ main() {
                -help|h) usage                           ;;
             -pretend|p) SUBST_SUFFIX=p ; SED_ARG=-n     ;;
               -quiet|q) QUIET=true                      ;;
+             -reload|r) RELOAD=true                     ;;
                      *) fatal "Unknown argument: -$arg" ;;
         esac
     done
@@ -219,6 +221,13 @@ main() {
         -e "s/^(color9 ).*/\1$COLOR_9/$SUBST_SUFFIX" \
         -e "/^[$]\{.*\{\w+graph / s/ [0-9a-fA-F]{6}\>/ $GRAPH_C/g$SUBST_SUFFIX" \
         "$FILE"
+
+    if [ -z "$PRETEND" -a -n "$RELOAD" ]; then
+        killall conky
+        conky
+        sleep 0.5
+        wmctrl -r "Conky ($(hostname))" -b add,below
+    fi
 
     qsay "Set theme to: $cmd_theme"
 }
