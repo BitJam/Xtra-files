@@ -3,7 +3,7 @@
 
 !!!--- Font and general settings 
 
-URxvt*.font:  xft:DejaVu Sans Mono:autohint=true:pixelsize=14
+URxvt*.font:  xft:DejaVu Sans Mono:autohint=true:size=11
 URxvt*.geometry:              90x32
 URxvt*.buffered:              true
 
