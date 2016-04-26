@@ -167,14 +167,15 @@ is_first_run() {
     fi
 }
 
-launch_desktop() {    
-    
-    #Line from BitJam to merge xresources into the database
-    if [[ -z $(xrdb -query ) ]]; then
-        [ -r "$xresources_config" ] && xrdb -merge "$xresources_config" &
+launch_desktop() {
+
+    if [[ -z $(xrdb -query) ]]; then
+        xrdb -load "$xresources_config"
+        sleep .5
+    else
+        xrdb -load "$xresources_config"
     fi
-    #end
-    
+
     #Poll for the window manager startup to find when the window manager has started
     say "Checking for running window manager @ $(cut -d " " -f22 /proc/self/stat)";
     for x in $(seq 1 $TIMES_TO_CHECK); do
