@@ -228,7 +228,7 @@ ${color}${alignc}Uptime: $uptime
 
 ${color}CPU:${alignr}${color3}${cpu}${color}%
 ${color}Freq:${color3}${alignr}${freq}
-${color}$alignr${cpugraph cpu0 30, 170 5599cc 5599cc}
+${color}$alignr${cpugraph cpu0 30,170 5599cc 5599cc}
 ${color}Disk:${alignr}${color3}${diskio}
 ${color}${alignr}${diskiograph 30,170 5599cc 5599cc}
 ${if_up eth0}${color}eth0 up: $alignr${color3} ${upspeed eth0}
