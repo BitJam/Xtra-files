@@ -136,7 +136,9 @@ read_args() {
                      v=*)       VERT=$value   ;;
                     auto) RESOLUTION=default  ;;
 
-                     uxa) ADD_UXA=true ; DRIVER=intel ;;
+                     uxa|sna) ADD_INTEL_ACCEL=$value
+                     [ "$FORCE" -o -e $DRIVER_DIR/intel$DRIVER_EXT ] || driver_error intel
+                         DRIVER=intel ;;
 
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
                         RESOLUTION=$param
@@ -252,7 +254,7 @@ Section "Monitor"
 EndSection
 
 Section "Device"
-    Identifier "Device0"$(driver_entry $driver)$(add_uxa)
+    Identifier "Device0"$(driver_entry $driver)$(add_intel_accel)
 EndSection
 
 Section "Screen"
@@ -264,8 +266,8 @@ EndSection
 Xorg_Conf
 }
 
-add_uxa() {
-    [ "$ADD_UXA" ] && echo -e '\n    Option     "AccelMethod"  "uxa"'
+add_intel_accel() {
+    [ "$ADD_INTEL_ACCEL" ] && echo -e "\n    Option     \"AccelMethod\"  \"$ADD_INTEL_ACCEL\""
 }
 good_fb_res() {
     local param=${1:-unknown} fb_size fb_name x
