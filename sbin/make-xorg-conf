@@ -136,6 +136,8 @@ read_args() {
                      v=*)       VERT=$value   ;;
                     auto) RESOLUTION=default  ;;
 
+                     uxa) ADD_UXA=true ; DRIVER=intel ;;
+
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
                         RESOLUTION=$param
                         continue
@@ -206,6 +208,7 @@ modes_section() {
     [ -n "$add_modes"  ] && modes="$modes$add_modes"
 
     cat<<Modes_Section
+
     SubSection "Display"
         Modes $modes
     EndSubSection
@@ -249,19 +252,21 @@ Section "Monitor"
 EndSection
 
 Section "Device"
-    Identifier "Device0"$(driver_entry $driver)
+    Identifier "Device0"$(driver_entry $driver)$(add_uxa)
 EndSection
 
 Section "Screen"
     Identifier      "Screen0"
     Monitor         "Monitor0"
     Device          "Device0"
-    DefaultDepth    16
-$(modes_section $mode)
+    DefaultDepth    16$(modes_section $mode)
 EndSection
 Xorg_Conf
 }
 
+add_uxa() {
+    [ "$ADD_UXA" ] && echo -e '\n    Option     "AccelMethod"  "uxa"'
+}
 good_fb_res() {
     local param=${1:-unknown} fb_size fb_name x
     local sys_dir=/sys/class/graphics/fb0
