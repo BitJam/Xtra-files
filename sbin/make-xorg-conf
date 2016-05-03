@@ -11,9 +11,6 @@ SAFE_RESOLUTION="1024x768"
 FALLBACK_RESOLUTION="1280x1024"
 
 ME=${0##*/}
-case $ME in
-    buildxconfig) LEGACY_MODE=true;;
-esac
 
 XORG_CONF=./xorg.conf
 DO_XORG=
@@ -80,28 +77,22 @@ Usage
 main() {
 
     # Read command line params that start with "-" and remove them from "$@"
-    local param
-    while [ $# -gt 0 -a "${#1}" -gt 0 -a -z "${1##-*}" ]; do
-        param=${1#-}
-        shift
-        case $param in
-               -force|f) FORCE=true        ;;
-                -help|h) usage             ;;
-              -output|o) [ $# -gt 0 ] || error "Expected a filename after -$param"
-                         FILE=$1; shift    ;;
-          -output=*|o=*) FILE=${param#*=}  ;;
-                      -) break             ;;
-                      *) error "Unknown command line argument -$param"
-        esac
-    done
+    local SHIFT
+    read_params "$@"
+    shift $SHIFT
 
-    if [ "$LEGACY_MODE" ]; then
-        [ $# -gt 0 ] && FILE=$1
-        : ${CMDLINE:=$(cat /proc/cmdline)}
-        read_cmdline $CMDLINE
-        [ -n "$DO_XORG" ] || exit
-    else
-        read_args $1
+    if [ $# -gt 0 ]; then
+        read_cmdline "$1"
+        shift
+    fi
+
+    read_params "$@"
+    shift $SHIFT
+
+    [ $# -gt 0 ] && error "Extra command line parameter(s): $*"
+
+    if [ -z "$FORCE" -a -n "$DRIVER" ]; then
+        test -e $DRIVER_DIR/$DRIVER$DRIVER_EXT || driver_error $DRIVER
     fi
 
     if [ "$FILE" ]; then
@@ -113,7 +104,26 @@ main() {
     fi
 }
 
-read_args() {
+read_params() {
+    local param
+    SHIFT=0
+    while [ $# -gt 0 -a "${#1}" -gt 0 -a -z "${1##-*}" ]; do
+        param=${1#-}
+        shift
+        SHIFT=$((SHIFT +  1))
+        case $param in
+               -force|f) FORCE=true        ;;
+                -help|h) usage             ;;
+              -output|o) [ $# -gt 0 ] || error "Expected a filename after -$param"
+                         FILE=$1; shift; SHIFT=$((SHIFT + 1))   ;;
+          -output=*|o=*) FILE=${param#*=}  ;;
+                      -) break             ;;
+                      *) error "Unknown command line argument -$param"
+        esac
+    done
+}
+
+read_cmdline() {
     local param value
 
     # Lowest priority gets evaluted first.
