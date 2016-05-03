@@ -146,37 +146,18 @@ read_cmdline() {
                      v=*)       VERT=$value   ;;
                     auto) RESOLUTION=default  ;;
 
-                     uxa|sna) ADD_INTEL_ACCEL=$value
-                     [ "$FORCE" -o -e $DRIVER_DIR/intel$DRIVER_EXT ] || driver_error intel
-                         DRIVER=intel ;;
+                 uxa|sna) ADD_INTEL_ACCEL=$value
+                          DRIVER=intel ;;
 
                *)   if echo $param | grep -q "^[0-9]\+x[0-9]\+$"; then
                         RESOLUTION=$param
                         continue
                     fi
-                    if [ "$FORCE" -o -e $DRIVER_DIR/$param$DRIVER_EXT ]; then
-                        DRIVER=$param
-                        continue
-                    fi
-                    driver_error $param
-                    ;;
+                    DRIVER=$param ;;
         esac
     done
 }
 
-read_cmdline() {
-    local param value
-    for param ; do
-        value=${param#*=}
-        case $param in
-                 xres=safe)  DRIVER=vesa       ;  RESOLUTION=safe ;;
-            xdrvr=*|drvr=*)  DRIVER=$value     ;  DO_XORG=true    ;;
-              xres=*|res=*)  RESOLUTION=$value ;  DO_XORG=true    ;;
-                  xorgconf)  DO_XORG=true                         ;;
-                    noxorg)  exit 0                               ;;
-          esac
-    done
-}
 #-------------------------------------------------------------------------------
 # Create a mode (resolution) section based on the parameter based.  If there
 # is no parameter then we don't create this section.  A "safe" parameter
