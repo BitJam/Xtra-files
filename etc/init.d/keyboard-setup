@@ -55,8 +55,8 @@ fi
 
 if [ -z "$should_run" -o -n "$dont_run" ]; then
     #loadkeys us
-    #font=Uni2-VGA16
-    font=default8x16
+    font=Uni2-VGA16
+    #font=default8x16
 
 	log_action_begin_msg "Setting console font to $font"
 
