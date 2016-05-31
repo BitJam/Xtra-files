@@ -595,6 +595,15 @@ $edit_unetbootin
         <label>$(echo $"Synchronize Directories")</label>
       </text>
     </hbox>
+    <hbox>
+      <button>
+        <input file>$ICONS/gparted.png</input>
+        <action>automount-config &</action>
+      </button>
+      <text use-markup="true" width-chars="32">
+        <label>$(echo $"Configure Automounting")</label>
+      </text>
+    </hbox>
   </vbox>
 </hbox> </frame> </vbox>
 <vbox> <frame> <hbox>
