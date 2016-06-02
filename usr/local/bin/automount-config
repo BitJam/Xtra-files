@@ -138,6 +138,7 @@ echo audio_command=$AUDIO_COMMAND >>/home/$USER/.desktop-session/automount.conf
 #restart automount-antix
 bash -c automount-antix &
 
+pkill -HUP conky
 #tell the gui to loop
 actionstatus=0
 }
