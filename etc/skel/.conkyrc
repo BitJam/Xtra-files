@@ -259,3 +259,11 @@ ${color}Swap:${alignr}$swap ${color3} /${color} $swapmax
 ${color}/ Disk:${alignr}${fs_used /} ${color3} /${color} ${fs_size /}
 ${color3}${alignc}${execi 1000 persist-enabled}
 ${execi 1000 acpi 2>/dev/null | grep -q . && echo "Batt: "}${execi 10 acpi -b 2>/dev/null | cut -d" " -f3,4 | sed 's/,$//'}
+
+
+
+
+
+
+
+
