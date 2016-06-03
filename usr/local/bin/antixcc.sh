@@ -549,10 +549,10 @@ $live_tab
     <hbox>
       <button>
         <input file>$ICONS/gparted.png</input>
-        <action>gksu gparted &</action>
+        <action>automount-config &</action>
       </button>
       <text use-markup="true" width-chars="32">
-        <label>$(echo $"Partition a Drive")</label>
+        <label>$(echo $"Configure Automounting")</label>
       </text>
     </hbox>
     <hbox>
@@ -598,10 +598,10 @@ $edit_unetbootin
     <hbox>
       <button>
         <input file>$ICONS/gparted.png</input>
-        <action>automount-config &</action>
+        <action>gksu gparted &</action>
       </button>
       <text use-markup="true" width-chars="32">
-        <label>$(echo $"Configure Automounting")</label>
+        <label>$(echo $"Partition a Drive")</label>
       </text>
     </hbox>
   </vbox>
@@ -627,7 +627,6 @@ $edit_printer
         <label>$(echo $"Configure Mouse")</label>
       </text>
     </hbox>
-
   </vbox>
   <vbox>
     <hbox>
