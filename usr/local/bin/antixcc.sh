@@ -608,6 +608,15 @@ $edit_unetbootin
 </hbox> </frame> </vbox>
 <vbox> <frame> <hbox>
   <vbox>
+    <hbox>
+      <button>
+        <input file>$ICONS/input-mouse.png</input>
+        <action>set-dpi &</action>
+      </button>
+      <text use-markup="true" width-chars="32">
+        <label>$(echo $"X Font Size")</label>
+      </text>
+    </hbox>
 $edit_printer    
     <hbox>
       <button>
