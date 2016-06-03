@@ -27,6 +27,7 @@ EDITOR="geany -i"
 
 Desktop=$"Desktop" System=$"System" Network=$"Network" Session=$"Session"
 Live=$"Live" Disks=$"Disks" Hardware=$"Hardware" 
+dpi_label=$(printf "%s (DPI)" $"Set Font Size")
 
 [ -d $HOME/.fluxbox -a -e /usr/share/xsessions/fluxbox.desktop ] \
     && edit_fluxbox=$(cat <<Edit_Fluxbox
@@ -69,7 +70,6 @@ Edit_Icewm
     </hbox>
 Edit_Jwm
 )
-
 
 # Edit syslinux.cfg if the device it is own is mounted read-write
 grep -q " /live/boot-dev .*\<rw\>" /proc/mounts \
@@ -614,7 +614,7 @@ $edit_unetbootin
         <action>set-dpi &</action>
       </button>
       <text use-markup="true" width-chars="32">
-        <label>$(echo $"X Font Size")</label>
+        <label>$dpi_label</label>
       </text>
     </hbox>
 $edit_printer    
