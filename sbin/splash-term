@@ -79,7 +79,7 @@ do_auto_mode() {
     read fb_name 2>/dev/null < $fb_name_file
 
     case $fb_name in
-      "VESA VGA") exit 0 ;;
+      "VESA VGA"|simple) exit 0 ;;
     esac
 
     read_splash_param
