@@ -1,0 +1,24 @@
+#!/bin/bash
+
+fmt="%20s|%6s|%6s|%6s|%s\n"
+
+log_file=/var/log/live/boot-log.log
+[ $UID != 0 ] && log_file=$HOME/boot-log.log
+
+main() {
+    test -e $log_file || printf "$fmt" date/time bash rox icewm cmdline > $log_file
+    bash_t=$(get_t bash)
+    rox_t=$(get_t rox)
+    ice_t=$(get_t icewm)
+    date=$(date +"%F %T")
+    printf "$fmt" "$date" "$bash_t" "$rox_t" "$ice_t" "$(cat /proc/cmdline)" | tee -a $log_file
+}
+
+get_t() {
+    prog=$1
+    pid=$(pgrep $prog | head -n1)
+    [ "$pid" ] && cut -d" " -f22 /proc/$pid/stat | sed -r 's/(..)$/.\1/'
+}
+
+main
+
