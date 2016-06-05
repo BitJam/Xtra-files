@@ -1,0 +1,145 @@
+#!/bin/bash
+
+#set-dpi - app to set font dpi and restart desktop session
+#code by dolphin_oracle June 3, 2016  
+#for antiX
+#scale_conky by BitJam, from antiX live-init system
+
+# translations stuff
+TEXTDOMAINDIR=/usr/share/locale 
+TEXTDOMAIN=set-dpi
+
+APPLY=$"Apply"
+CLOSE=$"Close"
+TITLE=$"Set Font Size"
+LABEL1=$"Font Size: "
+CURRENT=$"Current"
+MESSAGE=$"!!!Added by set-dpi"
+
+#initialize selection dialog
+get_selections()
+{
+#get predefined Xft.dpi value from existing ~/Xresources file
+DPI=$(xrdb -query |grep dpi|cut -f2)
+
+#if Xft.dpi setting doesn't exist in ~/Xresources, then guess dpi from X 
+if [ "$DPI" = "" ]; then
+DPI=$(xdpyinfo |grep dots|rev|cut -d ' ' -f4|rev|cut -d 'x' -f1)
+fi
+
+SCALE=$(awk "BEGIN {printf \"%.2f\n\",$DPI/96}")
+
+#set up selection gui
+# dpi selections are multiples of 96 
+selections=$(yad --form --title="$TITLE" --center --window-icon=video-display --button="$APPLY"!emblem-default!:0 --button="$CLOSE"!process-stop!:1\
+	--field="":LBL ""\
+	--field="$LABEL1":CB "$SCALE ($DPI dpi) ($CURRENT)!0.83 (80 dpi)!0.89 (85 dpi)!0.92 (88 dpi)!0.94 (90 dpi)!0.96 (92 dpi)!0.98 (94 dpi)!1.00 (96 dpi) (default)!1.02 (98 dpi)!1.04 (100 dpi)!1.08 (104 dpi)!1.12 (108 dpi)!\
+1.17 (112 dpi)!1.20 (115 dpi)!1.25 (120 dpi)!1.30 (125 dpi)!1.35 (130 dpi)!1.41 (135 dpi)!1.46 (140 dpi)!1.50 (144 dpi)!1.51 (145 dpi)!1.56 (150 dpi)!1.61 (155 dpi)!1.67 (160 dpi)!1.75 (168 dpi)!\
+1.77 (170 dpi)!1.88 (180 dpi)!1.98 (190 dpi)!2.00 (196 dpi)!2.08 (200 dpi)!2.29 (220 dpi)!2.50 (240 dpi)!2.71 (260 dpi)!2.92 (280 dpi)!3.12 (300 dpi)!3.33 (320 dpi)!3.54 (340 dpi)!\
+3.75 (360 dpi)!3.96 (380 dpi)!4.17 (400 dpi)!4.43 (425 dpi)!4.69 (450 dpi)")
+}
+
+actions()
+{
+
+#capture the exit code from the selection dialog
+status2=$?
+
+#echo $status2
+
+#decide what to do, based on exit code
+case $status2 in
+
+	0) adjust_settings
+		   ;;
+	1) quit
+		   ;;
+esac
+}
+
+adjust_settings()
+{
+
+DPI=$(echo $selections|cut -d '(' -f2|cut -d ' ' -f1)
+echo Selected DPI is: $DPI
+
+#make changes to Xresources file
+echo $DPI
+FILE="/home/$USER/.Xresources"
+EX_SETTING=$(grep Xft.dpi $FILE)
+
+#if existing setting is not present, write one into ~/.Xresources
+if [ "$EX_SETTING" = "" ]; then
+	echo " " >>$FILE
+	echo $MESSAGE>>$FILE
+	echo "Xft.dpi:	" $DPI>>$FILE
+	else
+	#if existing setting is present, change it
+	sed -i s/"Xft.dpi:.*"/"Xft.dpi: $DPI"/ $FILE
+fi
+
+#replace old Xresources file with current version
+xrdb $FILE
+
+#scale conky to width for new dpi (modified live-init code from BitJam)
+scale_conky
+
+#give all edits a chance to catch up before proceeding
+sleep 1
+
+#restart desktop-session which will also restart conky
+/usr/local/lib/desktop-session/desktop-session-restart &
+
+#let things settle down before bringing back the selection dialog
+sleep 1
+actionstatus=0
+}
+
+quit()
+{
+	actionstatus=1
+}
+
+scale_conky() {
+#scale conky to width for new dpi (modified live-init code from BitJam)
+#    local dpi=${1%.*}  user=$2  home=$3
+#    local file=/$home/.conkyrc  def_width=180  def_gheight=30
+local def_width=180  def_gheight=30
+local conkyfile=$HOME/.conkyrc
+local dpi=$DPI
+    [ "$dpi" ] || return
+    test -w $conkyfile || return
+    head $conkyfile | grep -iq "^#[[:space:]]*Standard[[:space:]]*antiX[[:space:]].conkyrc" || return
+
+    local width=$(($dpi * $def_width / 96 ))
+  # Don't make conky smaller than the default size
+    if [ $width -lt $def_width ]; then
+        dpi=96
+        width=$def_width
+    fi
+    echo "Setting Conky width to $width"
+    local gwidth=$((width - 10))
+    local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
+
+    bash -c "sed -i -r -e 's/^\s*(maximum_width\s+).*/\1$width/' \
+        -e 's/(graph\s+([a-z0-9]+\s+)?)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $conkyfile"
+}
+
+##start gui and run actions
+## this is actually gets things started.  everything up to now is definition of functions and variables
+
+# set initial status
+status=0
+
+while [ $status = "0" ]; do
+
+	#start the parent dialog
+	get_selections
+	
+	#once selection is made, use action function to decide what to do
+	actions
+
+	#app status is the same as whatever the last actionstatus is.  If 0, the while loop starts everything over
+	status=$actionstatus
+	
+done
