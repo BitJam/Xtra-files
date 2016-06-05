@@ -15,6 +15,7 @@ TITLE=$"Set Font Size"
 LABEL1=$"Font Size: "
 CURRENT=$"Current"
 MESSAGE=$"!!!Added by set-dpi"
+MESSAGE2=$"Open Apps will Require Restart for Changes to Take Effect"
 
 #initialize selection dialog
 get_selections()
@@ -33,15 +34,14 @@ SCALE=$(awk "BEGIN {printf \"%.2f\n\",$DPI/96}")
 # dpi selections are multiples of 96 
 selections=$(yad --form --title="$TITLE" --center --window-icon=video-display --button="$APPLY"!emblem-default!:0 --button="$CLOSE"!process-stop!:1\
 	--field="":LBL ""\
-	--field="$LABEL1":CB "$SCALE ($DPI dpi) ($CURRENT)!0.83 (80 dpi)!0.89 (85 dpi)!0.92 (88 dpi)!0.94 (90 dpi)!0.96 (92 dpi)!0.98 (94 dpi)!1.00 (96 dpi) (default)!1.02 (98 dpi)!1.04 (100 dpi)!1.08 (104 dpi)!1.12 (108 dpi)!\
-1.17 (112 dpi)!1.20 (115 dpi)!1.25 (120 dpi)!1.30 (125 dpi)!1.35 (130 dpi)!1.41 (135 dpi)!1.46 (140 dpi)!1.50 (144 dpi)!1.51 (145 dpi)!1.56 (150 dpi)!1.61 (155 dpi)!1.67 (160 dpi)!1.75 (168 dpi)!\
-1.77 (170 dpi)!1.88 (180 dpi)!1.98 (190 dpi)!2.00 (196 dpi)!2.08 (200 dpi)!2.29 (220 dpi)!2.50 (240 dpi)!2.71 (260 dpi)!2.92 (280 dpi)!3.12 (300 dpi)!3.33 (320 dpi)!3.54 (340 dpi)!\
-3.75 (360 dpi)!3.96 (380 dpi)!4.17 (400 dpi)!4.43 (425 dpi)!4.69 (450 dpi)")
+	--field="$LABEL1":CB "$SCALE ($DPI dpi) ($CURRENT)!0.9 (86 dpi)!0.95 (91 dpi)!1.00 (96 dpi)!1.17 (112 dpi)!1.25 (120 dpi)!1.33 (128 dpi)!1.5 (144 dpi)!1.67 (160 dpi)!1.75 (168 dpi)!1.84 (177 dpi)!2.00 (192 dpi)!\
+2.17 (208 dpi)!2.25 (216 dpi)!2.33 (224 dpi)!2.5 (240 dpi)!2.67 (256 dpi)!2.75 (264 dpi)!2.84 (273 dpi)!3.00 (288 dpi)!3.25 (312 dpi)!3.50 (336 dpi)!3.75 (360 dpi)!4.00 (384 dpi)!4.25 (408 dpi)!4.50 (432 dpi)!"\
+ --field="":LBL ""\
+--field="$MESSAGE2":LBL "")
 }
 
 actions()
 {
-
 #capture the exit code from the selection dialog
 status2=$?
 
@@ -54,6 +54,8 @@ case $status2 in
 		   ;;
 	1) quit
 		   ;;
+	252) quit
+			;;
 esac
 }
 
@@ -86,6 +88,13 @@ scale_conky
 
 #give all edits a chance to catch up before proceeding
 sleep 1
+
+##restart antix control center if running
+
+if [ $(psg antixcc.sh) ]; then
+	pkill -x antixcc.sh
+	antixcc.sh &
+fi
 
 #restart desktop-session which will also restart conky
 /usr/local/lib/desktop-session/desktop-session-restart &
