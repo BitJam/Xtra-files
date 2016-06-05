@@ -1,6 +1,6 @@
 # Standard antiX .conkyrc file
 #
-# Note: delete the line to disable automatic scaling with DPI
+# Note: delete the line above to disable automatic scaling with DPI
 # on the live system.
 
 # set to yes if you want Conky to be forked in the background
