@@ -229,7 +229,6 @@ ${color}${alignc}${time %a %d %b}
 ${color}${alignc}Uptime: $uptime
 ${color}${alignc}${exec disp=${DISPLAY#:}; disp=${disp%.[0-9]}; cat $HOME/.desktop-session/desktop-code.$disp 2>/dev/null}
 ${color}res:${alignr}${color3}${execi 60 xdpyinfo | sed -n -r "s/^\s*dimensions:.*\s([0-9]+x[0-9]+).*/\1/p"}
-${color}dpi:${alignr}${color3}${execi 60 xdpyinfo | sed -nr 's/^\s+resolution:\s+([0-9]+x[0-9]+).*/\1/p'}
 ${color}Automount: ${alignr}${color3}${execi 60 grep -q "^automount=TRUE" $HOME/.desktop-session/automount.conf 2>/dev/null && echo "enabled" || echo "disabled"}
 ${color}CPU:${alignr}${color3}${cpu}${color}%
 ${color}Freq:${color3}${alignr}${freq}
