@@ -26,7 +26,4 @@ test -e /live/config/fstab-hotplug \
 # Detect and set up correct broadcom
 /usr/local/bin/BroadcomStartup
 
-test -d /root/LiveUSB-Storage && which boot-log &>/dev/null \
-    && (sleep 10 && boot-log) &
-
 exit 0
