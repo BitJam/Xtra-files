@@ -201,8 +201,20 @@ launch_desktop() {
         sleep $STARTUP_DELAY;
         echo_cmd desktop-session-wallpaper;
 
+        # Only build desktop-menu if we need to
+        local new_lang_file=/etc/live/config/lang
+        if test -e $new_lang_file; then
+            local lang_file=$HOME/.desktop-session/lang old_lang=en
+            read old_lang 2>/dev/null < $lang_file
+            local new_lang=$(sed -nr 's/^WM_LANG="([^"]+)".*/\1/p' $new_lang_file)
+            if [ "$old_lang" != "$new_lang" ]; then
+                echo_cmd desktop-menu --write-out-global
+                echo $new_lang > $lang_file
+            fi
+        fi
+
         #Build Applications menu here rather than startup file?PB
-        echo_cmd desktop-menu --write-out-global;
+        #echo_cmd desktop-menu --write-out-global;
         
         #Check if the user would prefer their files not to be updated, if not protected... update or ask to update
         if [ "$SESSION_PROTECT" != "true" ]; then
