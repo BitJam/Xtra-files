@@ -15,9 +15,11 @@ volumeicon &
 # wicd-client -t &
 
 # Create a bootchart image if bootchart was run
- (sleep 6 && test -e /var/log/bootchart.tgz && ! test -e ~/bootchart.png \
-     && pybootchartgui && (feh ~/bootchart.png &) \
-     && sleep 1 && roxterm -e man feh)&
+test -e /etc/live/config/bootchart \
+    && (sleep 6 && test -e /var/log/bootchart.tgz \
+        && ! test -e ~/bootchart.png \
+        && pybootchartgui && (feh ~/bootchart.png &) \
+        && sleep 1 && roxterm -e man feh)&
 
 # Used on live system only
 (sleep 5 && toram-eject) &
