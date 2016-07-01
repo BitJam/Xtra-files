@@ -1,0 +1,485 @@
+#!/usr/bin/env bash
+# cli-installer for antiX
+# written by Burt Holland
+# heavily edited by anticapitalista
+
+TEXTDOMAINDIR=/usr/share/locale
+TEXTDOMAIN=cli-installer
+
+#Default
+DISTR0=antiX-15
+LIVEUSER=demo
+
+##functions
+#title
+#header
+#help_text
+#gethome
+#getroot
+#repartition
+#setfs
+#setpw
+#yn(yes/no)
+#getfs
+#encrypt
+
+
+title() {
+echo -ne "\e[32m"
+echo $"CL installer for $DISTRO"
+echo $"Version 3.2.0 2015/05/25"
+echo -ne "\e[0m"
+echo ''
+}
+
+header() {
+echo -ne "\e[36m"
+echo $"Requirements for minimum installation:"
+echo -ne "\e[0m"
+echo ''
+echo $"antiX-full: hard-disk 2.8GB  RAM 64MB"
+echo ''
+echo $"antiX-base: hard-disk 1.5GB  RAM 48MB"
+echo ''
+echo $"antiX-core: hard-disk 0.7GB  RAM 48MB"
+echo ''
+echo $"antiX-net:  hard-disk 0.3GB  RAM 48MB"
+echo ''
+echo $"Make sure you have are connected to "
+echo ''
+echo $"the net BEFORE running this installer"
+echo ''
+}
+
+help_text() {
+echo $"Usage: cli-installer [drive]"
+echo $"Where drive is the name of the drive $DISTRO is to be installed on."
+echo $"   For example: cli-installer sdb"
+echo $"The default is correct if the computer has only one drive."
+echo ''
+# tips for this version
+echo -ne "\e[36m"
+echo $"Pre-installation tips:"
+echo -ne "\e[0m"
+echo ''
+echo $"Set language at the boot screen by pressing F2"
+echo $"or by adding the line lang=xx where xx is your language code."
+echo $"eg lang=gr for Greek."
+echo ''
+echo $"Set timezone at the boot screen by pressing F3"
+echo ''
+echo $"Use kbd=dvorak for dvorak keyboard before installing"
+# end tips
+echo ''
+echo $"Press F1 at the boot screen for Help and list of cheatcodes for live use."
+}
+
+gethome() {
+ans=1
+while [[ "$ans" -ne 0 ]]
+do
+read -p $"/home partition (hda1, sda2, etc): " hdrv
+echo ''
+if [[ ("$hdrv" == "$rdrv") || !( -e "/dev/$hdrv" ) ]]
+  then echo $"$hdrv invalid. Retry:"
+  else ans=0
+fi
+done
+}
+
+getroot() {
+ans=1
+while [[ "$ans" -ne 0 ]]
+do
+read -p $"Root partition (hda1, sda2, etc): " rdrv
+if [[ "$rdrv" > "hd" && "$rdrv" < "he" ]]; then rpre=hd
+  elif [[ "$rdrv" > "sd" && "$rdrv" < "se" ]]; then rpre=sd
+  else rpre=x;
+fi
+if [[ !("$rpre" = "x") ]]
+  then 
+  gdrv1=-1
+  for var in "a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k"
+  do
+ if [[ "$rdrv" > "$rpre$var" ]]
+  then
+  gdrv1=$((gdrv1+1))
+  gdrv="$var"
+ fi
+ done
+ gpart=-1
+ var1=-1
+ for var in "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19"
+ do
+ var1=$((var1+1))
+ if [[ "$rdrv" == "$rpre$gdrv$var" ]]
+  then
+  gpart=$var
+  gpart1=$var1
+ fi
+ done
+fi
+if [[ "$rpre" = "x" || "$gdrv1" -lt 0 || "$gdrv1" -gt 18 || "$gpart1" -lt 0 ]]
+  then echo $"$rdrv invalid. Retry"
+  else ans=0
+fi
+done
+}
+
+repartition() {
+if [[ -n "$1" ]]
+  then cfdisk /dev/$1
+  else cfdisk
+fi
+}
+
+setfs() {
+umount /dev/$1 > /live/aufs/dev/null 2>&1
+echo $"Available file systems for $1 are:"
+echo "
+1)ext2 
+2)ext3 
+3)ext4 
+4)jfs 
+5)xfs 
+6)btrfs 
+7)reiserfs"
+echo ''
+ans=1
+while [[ $ans -ne 0 ]]
+do
+read -p $"Enter your choice 1-7: " fs
+if [[ "$fs" == "" ]]
+  then fs=ext4
+fi
+ans=0
+echo $"You have chosen $fs for $1"
+echo ''
+case $fs in
+1) mkfs.ext2 /dev/$1 > /live/aufs/dev/null 2>&1;;
+2) mkfs.ext3 /dev/$1 > /live/aufs/dev/null 2>&1;;
+3) mkfs.ext4 /dev/$1 > /live/aufs/dev/null 2>&1;;
+4) mkfs.jfs -q /dev/$1 > /live/aufs/dev/null 2>&1;;
+5) mkfs.xfs -f /dev/$1 > /live/aufs/dev/null 2>&1;;
+6) mkfs.btrfs /dev/$1 > /live/aufs/dev/null 2>&1;;
+7) mkreiserfs -q /dev/$1 > /live/aufs/dev/null 2>&1;;
+8) mkfs.reiser4 -f -y /dev/$1 > /live/aufs/dev/null 2>&1 
+
+echo $"Ignore any 'barrier' lines";;
+*) echo $"$fs invalid. Retry:"; ans=1
+esac;
+done
+}
+
+setpw() {
+ans=1
+while [[ $ans -ne 0 ]]
+do
+if (chroot /media/$rdrv passwd $1)
+  then ans=0
+  else
+  echo -ne "\e[31m"
+  echo $"Passwords are not identical. Retry:"
+  echo -ne "\e[0m"
+fi
+done
+}
+
+yn() {
+x=1
+while [[ "$x" -eq 1 ]]
+do
+x=0
+read -p "$*? "
+if [[ ("$REPLY" > "x~" && "$REPLY" < "z" ) || ("$REPLY" > "X~" && "$REPLY" < "Z") ]]
+  then ans=1	# yes
+  elif [[ ("$REPLY" > "m~" && "$REPLY" < "o" ) || ( "$REPLY" > "M~" && "$REPLY" < "O") ]]
+  then ans=0	# no
+  elif [[ -z "$REPLY" ]]
+  then ans=-1	# default
+  else
+  x=1
+  echo $"Invalid; retry:"
+fi
+done
+}
+
+getfs() {
+fs1=$(blkid /dev/$rdrv $a|sed -e "s/.*TYPE=\"//"|sed -e "s/\".*//")
+fs2=$(blkid /dev/$hdrv $a|sed -e "s/.*TYPE=\"//"|sed -e "s/\".*//")
+}
+
+##End of functions
+
+#Run Help
+if [[ "$1" == "-h" || "$1" == "--help" ]]
+  then
+  help_text
+  echo ''
+  read -p $"Press Enter to exit this script."
+  exit
+fi
+
+# Run as root check
+if [[ $UID -ne 0 ]]
+  then
+  echo -ne "\e[31m"
+  echo $"Please run this script as root."
+  echo -ne "\e[0m"
+  exit
+fi
+
+# Make sure /live/aufs/dev, /live/aufs/sys, /live/aufs/proc exist when starting script
+mkdir -p /live/aufs/dev /live/aufs/sys /live/aufs/proc
+# Make sure fstab is ok and start swap - (needed for antixsnapshot)
+make-fstab 
+swapon -a
+# Show requirements
+kernel="-$(uname -r)"
+echo ''
+header
+echo ''
+# Repartition or not and set file up system via cfdisk
+yn $"Do you want to repartition the disk (y/N)"
+if [[ $ans -eq 1 ]]
+ then
+   repartition $1
+   echo '====';
+   echo ''
+   getroot
+   echo ''
+   setfs $rdrv
+ else
+   echo ''
+   getroot
+   echo ''
+   echo $"Deleting the contents of the $rdrv partition."
+   echo $"This may take some time. Please wait...."
+fi
+mkdir /media/$rdrv > /live/aufs/dev/null 2>&1
+mount /dev/$rdrv /media/$rdrv > /live/aufs/dev/null 2>&1
+rm -r /media/$rdrv/* > /live/aufs/dev/null 2>&1
+echo ''
+# Set up separate /home and mount on /media/$hdrv
+yn $"Use separate '/home' partition (y/N)"
+if [[ "$ans" -eq 1 ]]
+  then
+  gethome
+    if [[ !(-e /media/$hdrv) ]]
+    then mkdir /media/$hdrv
+    fi
+    yn $"Is $hdrv a new '/home' partition (y/N)"
+    if [[ "$ans" -eq 1 ]]
+      then
+      hmtp=2
+      echo ''
+      yn $"Set file system for $hdrv  (y/N)"
+        if [[ "$ans" -eq 1 ]]
+        then
+        setfs $hdrv
+        fi
+        mount /dev/$hdrv /media/$hdrv > /live/aufs/dev/null 2>&1
+        rm -r /media/$hdrv/* > /live/aufs/dev/null 2>&1
+        else
+        hmtp=1
+        mount /dev/$hdrv /media/$hdrv
+    fi
+    else
+    hmtp=0
+fi
+getfs
+#Install grub-pc and clean out downloaded debs
+yn $"Are you running antiX-net (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+echo ''
+echo $"Time to download grub-pc, locales, keyboard-configuration, console-setup, sysv-rc-conf"
+apt-get update && apt-get -y install grub-pc locales keyboard-configuration console-setup sysv-rc-conf
+apt-get -y clean
+fi
+#We are now in $rdrv
+cd /media/$rdrv
+echo ''
+echo $"antiX will now be copied to $rdrv."
+echo $"This may take some time. Please wait...."
+cp -a /live/aufs/* .
+
+#set up fstab
+echo '# Pluggable devices are handled by uDev, they are not in fstab' > etc/fstab.new
+echo "/dev/$rdrv / $fs1 defaults,relatime 0 1"  >>  etc/fstab.new
+grep swap etc/fstab >> etc/fstab.new
+if [[ "$hmtp" -gt 0 ]]
+  then
+  echo "/dev/$hdrv /home $fs2 defaults,relatime 0 2" >> etc/fstab.new
+  arg1=$hdrv
+  else
+  arg1='xxxx'
+fi
+echo '# Dynamic entries below' >> etc/fstab.new
+grep -v '#' etc/fstab|grep -v swap|grep -v proc|grep -v devpts|grep -v $rdrv|grep -v $arg1 >> etc/fstab.new
+rm etc/fstab
+mv etc/fstab.new etc/fstab
+cp etc/group etc/group.bak
+cp etc/gshadow etc/gshadow.bak
+echo $"File copy done"
+echo ''
+yn $"Install GRUB on MBR (Y/n). No will install to root partition"
+if [[ $ans -eq 0 ]]
+  then grub=hd$gdrv1,$gpart1
+  else grub=hd$gdrv1
+fi
+
+#grub2 must set up bind mountpoints
+# mount stuff so grub will behave (so chroot will work)
+mount -o tmpfs --bind /dev/ /media/$rdrv/dev/ 
+mount -o proc --bind /proc/ /media/$rdrv/proc/ 
+mount -o sysfs --bind /sys/ /media/$rdrv/sys/ 
+chroot /media/$rdrv grub-install --recheck --no-floppy --force $grub > /dev/null  2>&1 
+chroot /media/$rdrv update-grub $grub > /dev/null  2>&1
+/sbin/make-fstab --install /media/$rdrv > /dev/null  2>&1
+chroot /media/$rdrv update-initramfs -u -t > /dev/null  2>&1
+echo $"GRUB installed on ($grub)"
+echo ''
+chroot /media/$rdrv userdel $LIVEUSER
+rm -r home/$LIVEUSER > /dev/null  2>&1
+read -p $"Computer name (default is 'antix1')? " cnam
+name=""
+if [[ -n "$cnam" ]]
+  then
+  echo "$cnam" > etc/hostname
+  sed -i s/antix1/$cnam/ etc/hosts
+fi
+echo ''
+echo $"Time to set up localisation"
+echo $"System locale is set to ..."
+chroot /media/$rdrv cat /etc/default/locale 
+yn $"Do you want to set up system localisation (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+chroot /media/$rdrv dpkg-reconfigure locales
+fi
+echo ''
+echo $"Time to set keyboard layout"
+echo $"System keyboard is set to ..."
+chroot /media/$rdrv cat /etc/default/keyboard 
+yn $"Do you want to set up keyboard (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+chroot /media/$rdrv dpkg-reconfigure keyboard-configuration 
+fi
+echo ''
+echo $"Time to set console layout"
+echo $"System console is set to ..."
+chroot /media/$rdrv cat /etc/default/console-setup
+yn $"Do you want to set up console layout (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+chroot /media/$rdrv dpkg-reconfigure console-setup
+fi
+echo ''
+echo $"Time to set timezone"
+echo $"System timezone is set to ..."
+chroot /media/$rdrv cat /etc/timezone 
+yn $"Do you want to set up system timezone (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+chroot /media/$rdrv dpkg-reconfigure tzdata 
+fi
+echo ''
+echo $"Choose which services to run"
+yn $"Do you want to enable/disable startup services (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+chroot /media/$rdrv sysv-rc-conf
+fi
+echo ''
+sleep 1
+yn $"Is this a remastered/snapshot install (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+  # Write code to get buildfstab -r to start on first boot via rc.local (if user wants it?)
+  mv etc/rc.local etc/rc.local2
+  mv etc/udev/rules.d/90-fstab-automount.rules etc/udev/rules.d/90-fstab-automount.rules.live
+  cp usr/share/antiX/rc.local.install etc/rc.local
+  # (also)Remove live system if it exists
+  chroot /media/$rdrv dpkg -r live-init-antix 2>/dev/null
+  rm /media/$hdrv/$LIVEUSER 
+  umount -l /media/$rdrv
+  umount -l /dev/$hdrv
+  echo $"Installation of $DISTRO finished!"
+  echo ''
+  echo $"Reboot computer without CD to start program. ('reboot')"
+  exit
+fi
+sleep 1
+echo $"Setting up user and root/admin accounts"
+name=''
+while [[ -z "$name" ]]
+do
+read -p $"Type in your default user name? " name
+done
+case $hmtp in
+0)chroot /media/$rdrv useradd -m $name;;
+1)echo '';echo $"Note: $hdrv must contain a folder named '$name'."
+chroot /media/$rdrv useradd $name;;
+2)chroot /media/$rdrv useradd -m $name;;
+esac
+echo $"Type your Password for $name:"
+setpw $name
+echo ''
+echo $"Type your Password for root:"
+setpw root
+mv etc/passwd etc/passwd.old
+grep -v "$name:" etc/passwd.old >> etc/passwd
+sed -i s/sh/bash/ etc/passwd.old
+grep "$name:" etc/passwd.old >> etc/passwd
+cp etc/group.bak etc/group
+cp etc/gshadow.bak etc/gshadow
+sed -i "s/$LIVEUSER/$name/" etc/group
+sed -i "s/$LIVEUSER/$name/" etc/gshadow
+sed -i "s/$LIVEUSER/$name/" usr/share/slim/themes/antiX/slim-install.conf 2>/dev/null
+yn $"Set autologin for $name: (y/N)"
+if [[ $ans -eq 1 ]]
+  then
+sed -i "s/#auto_login/auto_login/" usr/share/slim/themes/antiX/slim-install.conf 2>/dev/null
+sed -i "s/#default_user/default_user/" usr/share/slim/themes/antiX/slim-install.conf 2>/dev/null
+fi
+# Copy live configurations to install. For all.
+echo ''
+echo $"Cleaning up"
+/usr/sbin/live-to-installed /media/$rdrv
+rm etc/passwd.old
+rm etc/group.bak
+rm etc/gshadow.bak
+mv etc/rc.local etc/rc.local2
+mv etc/X11/xorg.conf etc/X11/xorg.conf.live 2>/dev/null
+cp usr/share/antiX/rc.local.install etc/rc.local
+cp usr/share/slim/themes/antiX/slim-install.conf etc/slim.conf 2>/dev/null
+chroot /media/$rdrv dpkg -r live-init-antix 2>/dev/null
+cp -r etc/skel/.[a-zA-Z]* home/*/ 2>/dev/null
+cp -r etc/skel/* home/*/ 2>/dev/null
+if [[ $hmtp -gt 0 ]]
+  then
+    if [[ $hmtp -eq 2 ]]
+    then mv home/* /media/$hdrv
+    fi
+  rm -r home
+  mkdir home
+  cp -r /media/$rdrv/etc/skel/.[a-zA-Z]* /media/$hdrv/*/ 2>/dev/null
+  cp -r /media/$rdrv/etc/skel/* /media/$hdrv/*/ 2>/dev/null
+  chown -R $LIVEUSER.users /media/$hdrv/* 2>/dev/null
+fi
+chown -R $LIVEUSER.$LIVEUSER home/* 2>/dev/null
+
+rm -rf media/sd*
+rm -rf media/hd*
+rmdir live
+umount -l /media/$rdrv/dev/
+umount -l /media/$rdrv/proc/
+umount -l /media/$rdrv/sys/
+umount -l /media/$rdrv
+if [[ "$hmtp" -ne 0 ]]; then umount -l /dev/$hdrv;fi
+echo ''
+echo $"Installation of $DISTRO finished!"
+echo ''
+echo $"Reboot computer without CD to start program. ('reboot')"
