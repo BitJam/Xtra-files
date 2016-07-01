@@ -329,6 +329,12 @@ if [[ $ans -eq 0 ]]
   else grub=hd$gdrv1
 fi
 
+# Copy over non-live boot parameters to the installed system
+cmdline=$(/live/bin/non-live-cmdline | sed -e 's/\\/\\\\/' -e 's/[|]/\\|/')
+[ $(uname -m) = x86_64 ] && cmdline="zswap.zpool=zsmalloc $cmdline"
+cmdline="quiet $cmdline"
+sed -r -i "s|^(GRUB_CMDLINE_LINUX_DEFAULT=).*|\1\$$cmdline|" /mnt/antiX/etc/default/grub
+
 #grub2 must set up bind mountpoints
 # mount stuff so grub will behave (so chroot will work)
 mount -o tmpfs --bind /dev/ /media/$rdrv/dev/ 
