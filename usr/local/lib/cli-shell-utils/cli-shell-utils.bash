@@ -205,7 +205,7 @@ _check_any() {
     for opt in ${opts//,/ }; do
         case ,$all, in
             *,$opt,*) continue ;;
-                   *) fatal $"Unknown %s option: %s" "$type" "$opt" ;;
+                   *) fatal "Unknown %s option: %s" "$type" "$opt" ;;
         esac
     done
 }
@@ -236,7 +236,7 @@ check_cmds() {
         cmd=${cmd%+}
         cmds_out="$cmds_out $(echo "$ORDERED_CMDS" | sed -rn "s/.*($cmd )/\1/p")"
         plus_cnt=$((plus_cnt + 1))
-        [ $plus_cnt -gt 1 ] && fatal $"Only one + command allowed"
+        [ $plus_cnt -gt 1 ] && fatal "Only one + command allowed"
     done
 
     [ ${#cmds_out} -gt 0 ] && eval "$cmds_nam=\"$cmds_in \$cmds_out\""
@@ -364,7 +364,7 @@ YES_no_pretend() {
         esac
 }
 
-shout_pretend() { [ "$PRETEND_MODE" ] && Shout $"PRETEND MODE ENABLED" ;}
+shout_pretend() { [ "$PRETEND_MODE" ] && Shout "PRETEND MODE ENABLED" ;}
 
 #------------------------------------------------------------------------------
 # Generate a simple selection menu based on a data:label data structure.
@@ -630,12 +630,12 @@ cli_search_file() {
 
         title=$(
         if [ $dir_cnt -eq 1 ]; then
-            quest $"Will search %s directory: %s\n"                          "$(pnq $dir_cnt)"   "$(pqq $dir_list)"
+            quest "Will search %s directory: %s\n"                          "$(pnq $dir_cnt)"   "$(pqq $dir_list)"
         else
-            quest $"Will search %s directories: %s\n"                        "$(pnq $dir_cnt)"   "$(pqq $dir_list)"
+            quest "Will search %s directories: %s\n"                        "$(pnq $dir_cnt)"   "$(pqq $dir_list)"
         fi
-            quest $"for files matching '%s' with a size of %s or greater\n"  "$(pqq $spec)"      "$(pq $min_size)"
-            quest $"Will search down %s directories"                         "$(pqq $max_depth)"
+            quest "for files matching '%s' with a size of %s or greater\n"  "$(pqq $spec)"      "$(pq $min_size)"
+            quest "Will search down %s directories"                         "$(pqq $max_depth)"
         )
 
         if [ $dir_cnt -le 0 ]; then
@@ -1318,7 +1318,7 @@ set_colors() {
         high) ;;
          low) ;;
          off) ;;
-           *) fatal color $"Unknown color parameter '%s'.  Expected high, low, or off" "$param" ;;
+           *) fatal color "Unknown color parameter '%s'.  Expected high, low, or off" "$param" ;;
     esac
     local e=$(printf "\e")
 
@@ -1350,8 +1350,8 @@ set_colors() {
     # FIXME: set more low colors!
     if [ "$param" = "low" ]; then
 
-        from_co=$brown ;       bold_co=$white ;  dev_co=$white ;
-          hi_co=$white ;    version_co=$white ;
+        from_co=$brown ;       bold_co=$white ;    dev_co=$white ;
+          hi_co=$white ;    version_co=$white ;  quest_co=$green ;
            m_co=$nc_co ;      fname_co=$nc_co ;
          num_co=$white ;      date_co=$nc_co  ;
     fi
@@ -1673,10 +1673,10 @@ umount_all() {
 
     # fatal "One or more partitions on device %s are mounted at: %s"
     # This makes it easier on the translators (and my validation)
-    local msg=$"One or more partitions on device %s are mounted at"
+    local msg="One or more partitions on device %s are mounted at"
     force umount || yes_NO_fatal "umount" \
-        $"Do you want those partitions unmounted?" \
-        $"Use %s to always have us unmount mounted target partitions" \
+        "Do you want those partitions unmounted?" \
+        "Use %s to always have us unmount mounted target partitions" \
         "$msg:\n  %s" "$dev" "$(echo $mounted)"
 
     local i part
@@ -1695,7 +1695,7 @@ umount_all() {
     done
 
     # Make translation and validation easier
-    msg=$"One or more partitions on device %s are in use at"
+    msg="One or more partitions on device %s are in use at"
     mounted=$(mount | egrep "^$dev[^ ]*" | cut -d" " -f3 | grep .) || return 0
     fatal "$msg:\n  %s"  "$dev" "$(echo $mounted)"
     return 1
@@ -1711,7 +1711,7 @@ do_flock() {
 
     if which flock &> /dev/null; then
         exec 18> $file
-        flock -n 18 || fatal 101 $"A %s process is running.  If you think this is an error, remove %s" "$me" "$file"
+        flock -n 18 || fatal 101 "A %s process is running.  If you think this is an error, remove %s" "$me" "$file"
         echo $$ >&18
         return
     fi
@@ -1719,9 +1719,9 @@ do_flock() {
     force flock && return
 
     yes_NO_fatal "flock" \
-        $"Do you want to continue without locking?" \
-        $"Use %s to always ignore this warning"     \
-        $"The %s program was not found." "flock"
+        "Do you want to continue without locking?" \
+        "Use %s to always ignore this warning"     \
+        "The %s program was not found." "flock"
 
     FLOCK_FAILED=true
 }
@@ -1730,11 +1730,14 @@ do_flock() {
 #
 #------------------------------------------------------------------------------
 reset_config() {
-    local file=${1:-$CONFIG_FILE}
-    mkdir -p $(dirname "$file") || fatal $"Could not create directory for config file"
+    local file=${1:-$CONFIG_FILE}  msg=$2
+
+    [ -n "$msg" ] || msg="Resetting config file %s"
+    msg "$msg" "$(pq $file)"
+
+    mkdir -p $(dirname "$file") || fatal "Could not create directory for config file"
     sed -rn "/^#=+\s*BEGIN_CONFIG/,/^#=+\s*END_CONFIG/p" "$0" \
         | egrep -v "^#=+[ ]*(BEGIN|END)_CONFIG" > $file
-    msg $"Reset config file %s" "$(pq $file)"
     return 0
 }
 
@@ -1749,7 +1752,7 @@ read_reset_config_file() {
     [ "$IGNORE_CONFIG" ] && return
 
     if [ "$RESET_CONFIG" -o ! -e "$file" ]; then
-        reset_config "$file"
+        reset_config "$file" $"Creating new config file %s"
     else
         test -r "$file" && . "$file"
     fi
@@ -1815,7 +1818,7 @@ need_prog() {
 #------------------------------------------------------------------------------
 is_writable() {
     local dir=$1
-    test -d "$dir" || fatal $"Directory %s does not exist" "$dir"
+    test -d "$dir" || fatal "Directory %s does not exist" "$dir"
     local temp=$(mktemp -p $dir 2> /dev/null) || return 1
     test -f "$temp" || return 1
     rm -f "$temp"
@@ -1827,8 +1830,8 @@ is_writable() {
 #------------------------------------------------------------------------------
 check_writable() {
     local dir=$1  type=$2
-    test -e "$dir"     || fatal $"The %s directory '%s' does not exist"     "$type" "$dir"
-    test -d "$dir"     || fatal $"The %s directory '%s' is not a directory" "$type" "$dir"
+    test -e "$dir"     || fatal  "The %s directory '%s' does not exist"     "$type" "$dir"
+    test -d "$dir"     || fatal  "The %s directory '%s' is not a directory" "$type" "$dir"
     is_writable "$dir" || fatal $"The %s directory '%s' is not writable"    "$type" "$dir"
 }
 
@@ -1864,10 +1867,10 @@ is_usb_or_removable() {
 #------------------------------------------------------------------------------
 my_mount() {
     local dev=$1  dir=$2 ; shift 2
-    is_mountpoint "$dir"              && fatal $"Directory '%s' is already a mountpoint" "$dir"
-    always_cmd mkdir -p "$dir"        || fatal $"Failed to create directory '%s'" "$dir"
-    always_cmd mount "$@" $dev "$dir" || fatal $"Could not mount %s at %s" "$dev" "$dir"
-    is_mountpoint "$dir"              || fatal $"Failed to mount %s at %s" "$dev" "$dir"
+    is_mountpoint "$dir"              && fatal "Directory '%s' is already a mountpoint" "$dir"
+    always_cmd mkdir -p "$dir"        || fatal "Failed to create directory '%s'" "$dir"
+    always_cmd mount "$@" $dev "$dir" || fatal "Could not mount %s at %s" "$dev" "$dir"
+    is_mountpoint "$dir"              || fatal "Failed to mount %s at %s" "$dev" "$dir"
 }
 
 #------------------------------------------------------------------------------
@@ -1973,10 +1976,10 @@ device_str() {
     local dev=$(expand_device "$file")
     case $(stat -c %t "${dev:-$file}") in
                  0) echo "$file_type"      ;;
-                 b) echo $"cd/dvd disc"    ;;
-                b3) echo $"mmc device"     ;;
-        3|8|22|103) echo $"disk device"    ;;
-                 *) echo $"unknown device" ;;
+                 b) echo "cd/dvd disc"    ;;
+                b3) echo "mmc device"     ;;
+        3|8|22|103) echo "disk device"    ;;
+                 *) echo "unknown device" ;;
     esac
 }
 
@@ -1989,7 +1992,7 @@ device_str() {
 #------------------------------------------------------------------------------
 my_mkdir() {
     dir=$1
-    mkdir -p "$dir" || fatal $"Could not make directory '%s'" "$dir"
+    mkdir -p "$dir" || fatal "Could not make directory '%s'" "$dir"
 }
 
 #------------------------------------------------------------------------------
