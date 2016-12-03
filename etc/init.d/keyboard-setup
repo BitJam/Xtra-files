@@ -27,7 +27,7 @@ for param in $(cat /proc/cmdline /live/config/cmdline 2>/dev/null); do
                        lang=*) should_run=true ;;
         kbd=*|kbopt=*|kbvar=*) should_run=true ;;
           noloadkeys|conkbd=*)   dont_run=true ;;
-                    confont=*) should_run=true;  CON_FONT=${param#*=}
+                    confont=*)   dont_run=true;  CON_FONT=${param#*=}
     esac
 done
 
