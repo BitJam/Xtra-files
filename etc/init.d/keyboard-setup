@@ -15,90 +15,97 @@
 #                    only the ASCII symbols are supported.
 ### END INIT INFO
 
-set -e
+DEFAULT_FONT="Uni2-VGA16"
 
 # This script is not used by keyboard-configuration.  It is used
 # jointly by console-setup and console-setup-mini
 
-test -f /bin/setupcon || exit 0
-
-for param in $(cat /proc/cmdline /live/config/cmdline 2>/dev/null); do
-    case "$param" in
-                       lang=*) should_run=true ;;
-        kbd=*|kbopt=*|kbvar=*) should_run=true ;;
-          noloadkeys|conkbd=*)   dont_run=true ;;
-                    confont=*)   dont_run=true;  CON_FONT=${param#*=}
+main() {
+    case "$1" in
+        stop|status)
+            # keyboard-setup isn't a daemon
+            ;;
+        start|force-reload|restart|reload)
+            do_start
+            ;;
+        *)
+            echo 'Usage: /etc/init.d/keyboard-setup {start|reload|restart|force-reload|stop|status}'
+            exit 1
+            ;;
     esac
-done
 
+    exit 0
+}
 
-if [ -f /etc/default/locale ]; then
-    # In order to permit auto-detection of the charmap when
-    # console-setup-mini operates without configuration file.
-    . /etc/default/locale
-    export LANG
-fi
+do_start() {
+    local param font should_run dont_run
+    for param in $(cat /proc/cmdline /live/config/cmdline 2>/dev/null); do
+        case "$param" in
+                       lang=*) should_run=true  ;;
+        kbd=*|kbopt=*|kbvar=*) should_run=true  ;;
+          noloadkeys|conkbd=*)   dont_run=true  ;;
+                    confont=*) font=${param#*=} ;;
+        esac
+    done
 
-if [ -f /lib/lsb/init-functions ]; then
     . /lib/lsb/init-functions
-else
-    log_action_begin_msg () {
-	echo -n "$@... "
-    }
 
-    log_action_end_msg () {
-	if [ "$1" -eq 0 ]; then 
-	    echo done.
-	else
-	    echo failed.
-	fi
-    }
-fi
+    if [ -n "$should_run" -a -z "$dont_run" ]; then
+        normal_start
+        [ ${#font} -gt 0 ] && set_console_font $font
+    else
+        set_console_font $font
+    fi
 
-font=$CON_FONT
-if [ -z "$should_run" -o -n "$dont_run" ]; then
+    exit 0
+}
+
+normal_start() {
+    set -e
+    test -f /bin/setupcon || return 0
+
+    if [ -f /etc/default/locale ]; then
+        # In order to permit auto-detection of the charmap when
+        # console-setup-mini operates without configuration file.
+        . /etc/default/locale
+        export LANG
+    fi
+
+    log_action_begin_msg "Setting preliminary keymap"
+    if setupcon -k 2>/dev/null; then
+        log_action_end_msg 0
+    else
+        log_action_end_msg $?
+    fi
+}
+
+set_console_font() {
+    set +e
+    local font=$1
     case $font in
-        [0-9][0-9]x[0-9][0-9]) 
-            font=Uni2-Terminus$font ;;
-        [bB][0-9][0-9]x[0-9][0-9]) 
-            font=Uni2-TerminusBold${font#[bB]} ;;
+            [0-9][0-9]x[0-9][0-9])  font=Uni2-Terminus$font            ;;
+        [bB][0-9][0-9]x[0-9][0-9])  font=Uni2-TerminusBold${font#[bB]} ;;
     esac
-    ffile=/usr/share/consolefonts/$font
-    [ -e $ffile -o -e $ffile.gz -o -e $ffile.psf.gz -o -e $ffile.psfu.gz \
-        -o -e $ffile.cp.gz -o -e $ffile.cp ] || font=
 
-    : ${font:=Uni2-VGA16}
+    local file=/usr/share/consolefonts/$font
+    [ -e $file -o -e $file.gz -o -e $file.psf.gz -o -e $file.psfu.gz \
+        -o -e $file.cp.gz -o -e $file.cp ] || font=
+
+    : ${font:=$DEFAULT_FONT}
 
 	log_action_begin_msg "Setting console font to $font"
 
+    local n ret=0
     for n in 1 2 3 4 5 6; do
-        tty=/dev/tty$n
+        local tty=/dev/tty$n
         test -e $tty || continue
-        setfont -C $tty $font
+        setfont -C $tty $font || ret=$?
     done
 
-    log_action_end_msg $?
+    log_action_end_msg $ret
+    return $ret
+}
 
-    exit 0
-fi
 
+main "$@"
 
-case "$1" in
-    stop|status)
-        # keyboard-setup isn't a daemon
-        ;;
-    start|force-reload|restart|reload)
-	log_action_begin_msg "Setting preliminary keymap"
-	if setupcon -k 2>/dev/null; then
-	    log_action_end_msg 0
-	else
-	    log_action_end_msg $?
-	fi
-	;;
-    *)
-        echo 'Usage: /etc/init.d/keyboard-setup {start|reload|restart|force-reload|stop|status}'
-        exit 1
-        ;;
-esac
-
-exit 0
