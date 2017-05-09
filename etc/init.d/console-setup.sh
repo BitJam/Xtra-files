@@ -10,7 +10,15 @@
 # Short-Description: Set console font and keymap
 ### END INIT INFO
 
-if [ -f /bin/setupcon ]; then
+for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
+    case "$param" in
+                       lang=*) should_run=true ;;
+        kbd=*|kbopt=*|kbvar=*) should_run=true ;;
+    esac
+done
+
+
+if [ -f /bin/setupcon -a -n "$should_run" ]; then
     case "$1" in
         stop|status)
         # console-setup isn't a daemon
@@ -43,4 +51,30 @@ if [ -f /bin/setupcon ]; then
             exit 3
             ;;
     esac
+
+else
+
+    case $1 in
+        start) ;;
+            *) exit 0 ;;
+    esac
+
+    font=
+    read font 2>/dev/null </live/config/font
+    : ${font:=Uni2-VGA16}
+
+    . /lib/lsb/init-functions
+
+    log_action_begin_msg "Setting console font to $font"
+
+    ret=0
+
+    for n in 1 2 3 4 5 6; do
+        tty=/dev/tty$n
+        test -e $tty || continue
+        setfont -C $tty $font || ret=$?
+    done
+
+    log_action_end_msg $ret
+    exit $ret
 fi
