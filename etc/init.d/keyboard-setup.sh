@@ -14,6 +14,15 @@
 #                    only the ASCII symbols are supported.
 ### END INIT INFO
 
+case $1 in start)
+    #font=$(sed -rn "s/^\s*FONT=.([a-zA-Z0-9-]+).*/\1/p" /etc/default/console-setup)
+    font=
+    read font 2>/dev/null </live/config/font
+    [ "$font" ] && setfont $font
+    ;;
+esac
+
+
 if [ -f /bin/setupcon ]; then
     case "$1" in
         stop|status)
