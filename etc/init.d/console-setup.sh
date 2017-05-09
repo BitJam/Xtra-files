@@ -59,19 +59,56 @@ else
             *) exit 0 ;;
     esac
 
-    font=
-    read font 2>/dev/null </live/config/font
+    # Set the console font based on values the file below. Try hard to get some
+    # reasonable font
+
+    file=/etc/default/console-setup
+    fdir=/usr/share/consolefonts
+
+    read live_font 2>/dev/null </live/config/font
+
+    if test -r $file; then
+        . $file
+
+        if [ -z "$CODESET" -o "$CODESET" = "guess" ]; then
+            case ${lang%%_*} in
+                             kk|ky|tj) code='CyrAsia'  ;;
+                                ru|uk) code='CyrKoi'   ;;
+                          bg|mk|ru|sr) code='CyrSlav'  ;;
+              bs|hr|cs|hu|pl|ro|sk|sl) code='Lat2'     ;;
+                af|sq|ast|da|nl|et|fr) code='Lat15'    ;;
+            'fi'|de|is|id|pt|es|sv|tr) code='Lat15'    ;;
+                                lt|lv) code='Lat7'     ;;
+                                   el) code='Greek'    ;;
+                                    *) code='Uni2'     ;;
+            esac
+
+        else
+            code=$CODESET
+        fi
+
+        ext=.psf.gz
+
+        font=
+        for try in $FONT $code-$FONTFACE$FONTSIZE$ext $live_font$ext $code-VGA16$ext; do
+            #echo $try
+            test -e $fdir/$try || continue
+            font=$try
+            break
+        done
+    fi
+
     : ${font:=Uni2-VGA16}
+
+    : ${ACTIVE_CONSOLES:=/dev/tty[1-6]}
 
     . /lib/lsb/init-functions
 
-    log_action_begin_msg "Setting console font to $font"
+    log_action_begin_msg "Setting console font to ${font%$ext}"
 
     ret=0
 
-    for n in 1 2 3 4 5 6; do
-        tty=/dev/tty$n
-        test -e $tty || continue
+    for tty in $ACTIVE_CONSOLES; do
         setfont -C $tty $font || ret=$?
     done
 
