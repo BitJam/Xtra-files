@@ -62,6 +62,9 @@ else
     # Set the console font based on values the file below. Try hard to get some
     # reasonable font
 
+    # Don't try to set the font if there is no framebuffer
+    test -d /dev/fb0 || exit 0
+
     file=/etc/default/console-setup
     fdir=/usr/share/consolefonts
 
