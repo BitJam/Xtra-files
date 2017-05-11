@@ -16,7 +16,7 @@
 
 case $1 in start)
     prog=/live/bin/set-console-font
-    #test -x $prog && $prog --auto
+    test -x $prog && $prog --auto
 esac
 
 
