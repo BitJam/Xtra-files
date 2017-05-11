@@ -11,7 +11,7 @@
 ### END INIT INFO
 
 for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
-    case "$param" in
+    case $param in
                        lang=*) should_run=true ;;
         kbd=*|kbopt=*|kbvar=*) should_run=true ;;
     esac
