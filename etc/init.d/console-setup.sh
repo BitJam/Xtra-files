@@ -17,7 +17,6 @@ for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); 
     esac
 done
 
-
 if [ -f /bin/setupcon -a -n "$should_run" ]; then
     case "$1" in
         stop|status)
@@ -59,47 +58,14 @@ else
             *) exit 0 ;;
     esac
 
+    # Don't try to set the font if there is no framebuffer
+    test -e /dev/fb0 || exit 0
+
     # Set the console font based on values the file below. Try hard to get some
     # reasonable font
 
-    # Don't try to set the font if there is no framebuffer
-    test -d /dev/fb0 || exit 0
-
-    file=/etc/default/console-setup
-    fdir=/usr/share/consolefonts
-
-    read live_font 2>/dev/null </live/config/font
-
-    if test -r $file; then
-        . $file
-
-        if [ -z "$CODESET" -o "$CODESET" = "guess" ]; then
-            case ${lang%%_*} in
-                             kk|ky|tj) code='CyrAsia'  ;;
-                                ru|uk) code='CyrKoi'   ;;
-                          bg|mk|ru|sr) code='CyrSlav'  ;;
-              bs|hr|cs|hu|pl|ro|sk|sl) code='Lat2'     ;;
-                af|sq|ast|da|nl|et|fr) code='Lat15'    ;;
-            'fi'|de|is|id|pt|es|sv|tr) code='Lat15'    ;;
-                                lt|lv) code='Lat7'     ;;
-                                   el) code='Greek'    ;;
-                                    *) code='Uni2'     ;;
-            esac
-
-        else
-            code=$CODESET
-        fi
-
-        ext=.psf.gz
-
-        font=
-        for try in $FONT $code-$FONTFACE$FONTSIZE$ext $live_font$ext $code-VGA16$ext; do
-            #echo $try
-            test -e $fdir/$try || continue
-            font=$try
-            break
-        done
-    fi
+    read_font=/live/bin/read-console-font
+    test -x $read_font && font=$($read_font "$lang")
 
     : ${font:=Uni2-VGA16}
 
@@ -107,7 +73,7 @@ else
 
     . /lib/lsb/init-functions
 
-    log_action_begin_msg "Setting console font to ${font%$ext}"
+    log_action_begin_msg "Setting console font to $font"
 
     ret=0
 
