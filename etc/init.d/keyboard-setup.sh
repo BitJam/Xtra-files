@@ -15,11 +15,21 @@
 ### END INIT INFO
 
 case $1 in start)
-    #font=$(sed -rn "s/^\s*FONT=.([a-zA-Z0-9-]+).*/\1/p" /etc/default/console-setup)
-    font=
-    read font 2>/dev/null </live/config/font
-    [ "$font" ] && setfont $font
-    ;;
+
+    # Set the console font based on values the file below. Try hard to get some
+    # reasonable font
+
+    for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
+        case "$param" in
+            lang=*) should_run=true ;;
+        esac
+    done
+
+    read_font=/live/bin/read-console-font
+    test -e /dev/fb0 && test -x $read_font && font=$($read_font "$lang")
+
+    [ -n "$font" ] && setfont $font
+
 esac
 
 
