@@ -15,7 +15,7 @@
 ### END INIT INFO
 
 case $1 in start)
-    prog=/live/bin/set-console-font
+    prog=/live/bin/set-console-width
     test -x $prog && $prog --auto
 esac
 
