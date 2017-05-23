@@ -1,1 +1,1 @@
-KERNEL=="fb[0-9]", ACTION!="remove", RUN+="/live/bin/set-width --auto"
+KERNEL=="fb[0-9]", ACTION!="remove", RUN+="/live/bin/set-console-width --auto"
