@@ -32,9 +32,9 @@ main() {
         param=${1#-}
         shift
         case $param in
-            -auto|a) do_auto_mode  ; exit 0 ;;
-            -help|h) usage                  ;;
-           -quiet|q) QUIET_MODE=true        ;;
+            -auto|a) do_auto_mode  ; set_font ; exit ;;
+            -help|h) usage                           ;;
+           -quiet|q) QUIET_MODE=true                 ;;
         esac
     done
 
@@ -75,16 +75,21 @@ set_splash() {
 do_auto_mode() {
 
     local fb_name fb_name_file=/sys/class/graphics/fb0/name
-    test -e $fb_name_file || exit 0
+    test -e $fb_name_file || return
     read fb_name 2>/dev/null < $fb_name_file
 
     case $fb_name in
-      "VESA VGA"|simple) exit 0 ;;
+      "VESA VGA"|simple) return ;;
     esac
 
     read_splash_param
-    [ "$SPLASH" ]  || exit 0
+    [ "$SPLASH" ]  || return
     set_splash 1 ${THEME:-default} >> $LOG_FILE
+}
+
+set_font() {
+    prog=/live/bin/set-console-width
+    text -x $prog && $prog --auto
 }
 
 read_splash_param() {
