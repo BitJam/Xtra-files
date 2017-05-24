@@ -89,7 +89,7 @@ do_auto_mode() {
 
 set_font() {
     prog=/live/bin/set-console-width
-    text -x $prog && $prog --auto
+    test -x $prog && $prog --auto
 }
 
 read_splash_param() {
