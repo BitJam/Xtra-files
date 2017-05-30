@@ -32,7 +32,7 @@ main() {
         param=${1#-}
         shift
         case $param in
-            -auto|a) do_auto_mode  ; set_font ; exit ;;
+            -auto|a) do_auto_mode  ;  exit           ;;
             -help|h) usage                           ;;
            -quiet|q) QUIET_MODE=true                 ;;
         esac
