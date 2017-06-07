@@ -16,7 +16,7 @@
 
 case $1 in start)
     prog=/live/bin/set-console-width
-    test -x $prog && $prog --auto
+    test -x $prog && $prog --auto keyboard-setup.sh
 esac
 
 
