@@ -87,9 +87,10 @@ do_auto_mode() {
     set_splash 1 ${THEME:-default} >> $LOG_FILE
 }
 
+# Not currently used
 set_font() {
     prog=/live/bin/set-console-width
-    test -x $prog && $prog --auto
+    test -x $prog && $prog --auto splash-term
 }
 
 read_splash_param() {
