@@ -100,12 +100,6 @@ set novisualbell
 set t_vb=
 set tm=500
 
-" Properly disable sound on errors on MacVim
-if has("gui_macvim")
-    autocmd GUIEnter * set vb t_vb=
-endif
-
-
 set background=dark
 
 " Set utf8 as standard encoding and en_US as the standard language
