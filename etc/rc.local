@@ -14,12 +14,15 @@ restore=/live/etc/init.d/live-restore-services
 
 [ -x $restore ] && $restore start
 
+# Restore files under /sys *after* udev has run, otherwise
+# the module we want to manipulate may not be loaded yet.
 usb_save=/live/etc/init.d/live-usb-save
 [ -x $usb_save ] && $usb_save sys
 
 # Add a background image to every virtual console if the splash
 # boot parameter was given
-/sbin/splash-all --auto
+splash=/sbin/splash-all
+test -x $splash && $splash --auto
 
 # Enable fstab auto-stuff after udev has run
 fstab_rules=/live/etc/udev/rules.d/90-fstab-automount.rules
