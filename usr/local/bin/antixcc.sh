@@ -2,19 +2,26 @@
 # File Name: controlcenter.sh
 # Purpose: all-in-one control centre for antiX
 # Authors: OU812 and minor modifications by anticapitalista
-# Latest Change: 20 August 2008
-# Latest Change: 11 January 2009 and renamed antixcc.sh
-# Latest Change: 15 August 2009 some apps and labels altered.
-# Latest Change: 09 March 2012 by anticapitalista. Added Live section.
-# Latest Change: 22 March 2012 by anticapitalista. Added jwm config options and edited admin options.
-# Latest Change: 18 April 2012 by anticapitalista. mountbox-antix opens as user not root.
-# Latest Change: 06 October 2012 by anticapitalista. Function for ICONS. New icon theme.
-# Latest Change: 26 October 2012 by anticapitalista. Includes gksudo and ktsuss.
-# Latest Change: 12 May 2013 by anticapitalista. Let user set default apps.
-# Latest Change: 05 March 2015 by BitJam: Add alsa-set-card, edit excludes, edit bootloader.  Fix indentation.
-#                                         Hide live tab on non-live systems.  Use echo instead of gettext.
-#                                         Remove unneeded doublequotes between tags.  Use $(...) instead of `...`.
-# Latest Change: 01 May 2016 by anticapitalista: Use 1 script and use hides if nor present on antiX-base
+# Latest Change:
+# 20 August 2008
+# 11 January 2009 and renamed antixcc.sh
+# 15 August 2009 some apps and labels altered.
+# 09 March 2012 by anticapitalista. Added Live section.
+# 22 March 2012 by anticapitalista. Added jwm config options and edited admin options.
+# 18 April 2012 by anticapitalista. mountbox-antix opens as user not root.
+# 06 October 2012 by anticapitalista. Function for ICONS. New icon theme.
+# 26 October 2012 by anticapitalista. Includes gksudo and ktsuss.
+# 12 May 2013 by anticapitalista. Let user set default apps.
+# 05 March 2015 by BitJam: Add alsa-set-card, edit excludes, edit bootloader.  Fix indentation.
+#   * Hide live tab on non-live systems.  Use echo instead of gettext.
+#   * Remove unneeded doublequotes between tags.  Use $(...) instead of `...`.
+# 01 May 2016 by anticapitalista: Use 1 script and use hides if nor present on antiX-base
+# 11 July 2017 by BitJam:
+#   * use a subroutine to greatly consolidate code
+#   * use existence of executable as the key instead of documentation directory
+#   * move set-dpi to desktop tab
+#   * enable ati driver button in hardware tab
+#
 # Acknowledgements: Original script by KDulcimer of TinyMe. http://tinyme.mypclinuxos.com
 #################################################################################################################################################
 
