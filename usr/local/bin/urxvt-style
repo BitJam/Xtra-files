@@ -1,0 +1,201 @@
+#!/bin/bash
+
+ME=${0##*/}
+DEF_FILE=$HOME/.Xresources
+DIR=/usr/local/lib/urxvt/Xresources
+
+VERBOSE=
+ONLY=
+
+usage() {
+    local ret=${1:-0}
+
+    cat << Usage
+Usage: $ME [options] styles [[:|--] urxvt-args]
+
+Configure the style of urxvt via simple style directives.  Styles
+accumulate until you "reset".  Use an optional ":" or "--" to separate
+the urxvt arguments (usually not needed).
+
+Options:
+    -d --dir=<dir>    Use <dir> as the resource directory instead of
+                      $DIR
+    -f --file <file>  Use <file> as the default file instead of 
+                      $DEF_FILE
+
+    -h --help     Show this help
+    -l --list     List available styles
+    -o --only     Only change the style, don't open a urxvt window
+    -s --show     Show current defaults (could be long)
+    -v --verbose  Display the contents of the styles as they are used
+
+Styles:
+
+meta:
+    orig          Restore the original default
+    reset         Go back to the current default in the file:
+                    $DEF_FILE
+    save          Save the current settings as the new default in:
+                    $DEF_FILE
+
+color scheme:
+    def-colors    The default colors 
+    sorbet        More colorful version of zenburn
+    zenburn       Subtle, low-contrast colors
+
+NOTE:
+Use the ansi-bars, ansi-colors, and ansi-tput programs to demo
+the curent color scheme.
+
+special features:
+    font-size     Adjust font size with Ctrl-Shift-Up/Down 
+    plain         Disable fontsize and tabbed
+    tabbed        Use Shift-Down for new tab, Shift-Left/Right to move
+                    between tabs, or use mouse on the tab bar
+
+geometry:
+    small        80 x 28
+    medium       90 x 32
+    large       100 x 45
+    xlarge      120 x 55
+
+other:
+    sizeNN        Font size: 10 -- 18
+    fadeNN        Dim text when window loses focus 10 -- 90
+
+scrollbar:
+    sbar-left     Put scrollbar on left side of terminal
+    sbar-off      Turn off scrollbar
+    sbar-right    Put scrollbar on right side of terminal
+
+NOTE: 
+Use alt-s (the letter "s") to search scrollbuffer with a Perl
+regular expression.  use Up and Down to visit different matches.
+
+background:
+    blackbg       Use black background
+    transbg       Use pseudo-transparent background
+    zenbg         Use zenburn background
+
+    shadeNN       Darken or lighten transparent background
+                    0: all-black   100: off   200: all-white
+
+    blurNN        Blur the transparent background (uses CPU!)
+                    by NN pixels 0 -- 20
+
+    wipeNN        Blur vertically by NN pixels 10 -- 60
+    swipeNN       Blur horizontally by NN pixels 10 -- 60
+
+NOTE: 
+Use blur0 to disable blur, wipe and swipe.
+
+If your ~/.Xresources file is not being loaded automatically then you
+need to start the first invocation of $ME with the "reset" style to
+get that file read.  Normally, you only need to do this once.
+
+Examples:
+    $ME reset sorbet blur5 tabbed size15
+    $ME large zenburn transbg size12
+
+Usage
+
+    exit $ret
+}
+
+main() {
+    local arg val
+
+    while [ $# -gt 0 -a -z "${1##-*}" ]; do
+        arg=${1#-}; shift
+
+        echo "arg=$arg"
+        case $arg in
+            -dir|-file|[df]) 
+                [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
+                val=$1
+                [ -n "$val" -a -z "${val##-*}" ] \
+                    && fatal "Suspicious argument after -$arg: $val"
+                shift           ;;
+            *=*)  val=${arg#*=} ;;
+              *)  val="???"     ;;
+        esac
+
+        echo "arg=$arg"
+        case $arg in
+     -dir=*|-dir|d=*|d) DIR=$val              ;;
+   -file=*|-file|f=*|f) DEF_FILE=$val         ;;
+               -help|h) usage                 ;;
+               -list|l) ls $DIR      ; exit 0 ;;
+               -only|o) ONLY=true             ;;
+               -show|s) xrdb -query  ; exit 0 ;;
+            -verbose|v) VERBOSE=true          ;;
+                     *) fatal "Unknown option: -$arg" ; exit 1  ;;
+        esac
+    done
+
+    local cmnd styles style
+
+    cmnd=${ME##urxvt}
+    cmnd=${cmnd##-style}
+    styles=$(echo $cmnd | sed 's/-/ /g')
+    for style in $styles; do
+        apply_style $style
+    done
+   
+    while [ $# -gt 0 ]; do
+        style=$1
+        case $style in -*) break;; esac
+
+        shift
+        apply_style $style || break
+    done
+
+    [ "$ONLY" ] && exit 0
+
+    [ -n "$VERBOSE" -a $# -gt 0 ] && echo "! urxvt" "$@" 
+    urxvt "$@" &
+}
+
+
+apply_style() {
+    local style=$1
+
+    case $style in
+         --|:)  return 1;;
+
+        reset)  xrdb $DEF_FILE;;
+
+         save)  [ -e $DEF_FILE.orig ] || mv $DEF_FILE $DEF_FILE.orig
+                xrdb -query > $DEF_FILE;;
+
+         orig)  if [ -e $DEF_FILE.orig ]; then
+                    cp $DEF_FILE.orig $DEF_FILE
+                else
+                    err "No .orig file found"
+                fi;;
+
+            *)  local file=$DIR/$style
+                if [ -f $file ]; then
+                    xrdb -merge $file
+                    [ "$VERBOSE" ] && cat $file
+                else
+                    err "could not find file $file"
+                fi ;;
+    esac
+
+    return 0
+}
+
+err() {
+    printf "$ME: $@" >&2
+    echo >&2
+}
+
+fatal() {
+    printf "$ME fatal error: $@" >&2
+    echo >&2
+    exit 2
+}
+
+main "$@"
+

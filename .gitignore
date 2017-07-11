@@ -11,7 +11,6 @@ usr/local/bin/live-kernel-updater
 usr/local/bin/live-usb-maker
 usr/local/bin/mpv
 usr/local/bin/splash-select
-usr/local/bin/urxvt-style
 usr/local/lib/
 usr/local/share/
 usr/sbin/
