@@ -78,7 +78,7 @@ grep -q " /live/boot-dev .*\<rw\>" /proc/mounts \
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop.png</input>
-        <action>gksu "$EDITOR /live/boot-dev/boot/syslinux/syslinux.cfg /live/boot-dev/boot/syslinux/gfxboot.cfg" &</action>
+        <action>gksu "$EDITOR /live/boot-dev/boot/syslinux/syslinux.cfg &</action>
       </button>
       <text use-markup="true" width-chars="32">
         <label>$(echo $"Edit Bootloader menu")</label>
@@ -115,8 +115,8 @@ test -d $global_dir  && edit_global=$(cat <<Edit_Global
 Edit_Global
 )
 
-synaptic_dir=/usr/share/synaptic
-test -d $synaptic_dir  && edit_synaptic=$(cat <<Edit_Synaptic
+if test -x /usr/sbin/synaptic; then 
+    edit_synaptic=$(cat <<Edit_Synaptic
     <hbox>
       <button>
         <input file>$ICONS2/synaptic.png</input>
@@ -129,8 +129,23 @@ test -d $synaptic_dir  && edit_synaptic=$(cat <<Edit_Synaptic
 Edit_Synaptic
 )
 
-bootrepair_dir=/usr/share/bootrepair
-test -d $bootrepair_dir  && edit_bootrepair=$(cat <<Edit_Bootrepair
+elif test -x /usr/local/bin/cli-aptiX; then
+    edit_synaptic=$(cat <<Edit_Synaptic
+    <hbox>
+      <button>
+        <input file>$ICONS2/synaptic.png</input>
+        <action>desktop-defaults-run -t sudo /usr/local/bin/cli-aptiX --pause &</action>
+      </button>
+      <text use-markup="true" width-chars="32">
+        <label>$(echo $"Manage Packages")</label>
+      </text>
+    </hbox>
+Edit_Synaptic
+)
+fi
+
+bootrepair_prog=/usr/sbin/bootrepair
+test -x $bootrepair_prog  && edit_bootrepair=$(cat <<Edit_Bootrepair
     <hbox>
       <button>
         <input file>$ICONS/computer.png</input>
@@ -143,8 +158,8 @@ test -d $bootrepair_dir  && edit_bootrepair=$(cat <<Edit_Bootrepair
 Edit_Bootrepair
 )
 
-wicd_dir=/usr/share/wicd
-test -d $wicd_dir  && edit_wicd=$(cat <<Edit_Wicd
+wicd_prog=/usr/bin/wicd-gtk
+test -x $wicd_prog  && edit_wicd=$(cat <<Edit_Wicd
     <hbox>
       <button>
         <input file>$ICONS/nm-device-wireless.png</input>
@@ -157,8 +172,8 @@ test -d $wicd_dir  && edit_wicd=$(cat <<Edit_Wicd
 Edit_Wicd
 )
 
-firewall_dir=/usr/share/gufw
-test -d $firewall_dir  && edit_firewall=$(cat <<Edit_Firewall
+firewall_prog=/usr/bin/gufw
+test -x $firewall_prog  && edit_firewall=$(cat <<Edit_Firewall
     <hbox>
       <button>
         <input file>$ICONS/firewall.png</input>
@@ -171,8 +186,8 @@ test -d $firewall_dir  && edit_firewall=$(cat <<Edit_Firewall
 Edit_Firewall
 )
 
-backup_dir=/usr/share/luckybackup
-test -d $backup_dir  && edit_backup=$(cat <<Edit_Backup
+backup_prog=/usr/bin/luckybackup
+test -x $backup_prog  && edit_backup=$(cat <<Edit_Backup
     <hbox>
       <button>
         <input file>$ICONS/luckybackup.png</input>
@@ -185,8 +200,8 @@ test -d $backup_dir  && edit_backup=$(cat <<Edit_Backup
 Edit_Backup
 )
 
-equalizer_dir=/usr/share/doc/alsamixer-equalizer-antix
-test -d $equalizer_dir  && edit_equalizer=$(cat <<Edit_Equalizer
+equalizer_prog=/usr/bin/alsamixer
+test -x $equalizer_prog  && edit_equalizer=$(cat <<Edit_Equalizer
     <hbox>
       <button>
         <input file>$ICONS2/alsamixer-equalizer.png</input>
@@ -199,8 +214,8 @@ test -d $equalizer_dir  && edit_equalizer=$(cat <<Edit_Equalizer
 Edit_Equalizer
 )
 
-unetbootin_dir=/usr/share/doc/unetbootin
-test -d $unetbootin_dir  && edit_unetbootin=$(cat <<Edit_Unetbootin
+unetbootin_prog=/usr/bin/unetbootin
+test -x $unetbootin_prog  && edit_unetbootin=$(cat <<Edit_Unetbootin
     <hbox>
       <button>
         <input file>$ICONS/usb-creator.png</input>
@@ -213,8 +228,8 @@ test -d $unetbootin_dir  && edit_unetbootin=$(cat <<Edit_Unetbootin
 Edit_Unetbootin
 )
 
-printer_dir=/usr/share/system-config-printer
-test -d $printer_dir  && edit_printer=$(cat <<Edit_Printer
+printer_prog=/usr/bin/system-config-printer
+test -x $printer_prog  && edit_printer=$(cat <<Edit_Printer
     <hbox>
       <button>
         <input file>$ICONS2/hplj1020_icon.png</input>
@@ -227,8 +242,8 @@ test -d $printer_dir  && edit_printer=$(cat <<Edit_Printer
 Edit_Printer
 )
 
-livekernel_dir=/usr/share/doc/live-kernel-updater
-test -d $livekernel_dir  && edit_livekernel=$(cat <<Edit_Livekernel
+livekernel_prog=/usr/local/bin/live-kernel-updater
+test -x $livekernel_prog && edit_livekernel=$(cat <<Edit_Livekernel
     <hbox>
       <button>
         <input file>$ICONS/usb-creator.png</input>
@@ -241,8 +256,8 @@ test -d $livekernel_dir  && edit_livekernel=$(cat <<Edit_Livekernel
 Edit_Livekernel
 )
 
-lxkeymap_dir=/usr/share/doc/lxkeymap
-test -d $lxkeymap_dir  && edit_lxkeymap=$(cat <<Edit_Lxkeymap
+lxkeymap_prog=/usr/bin/lxkeymap
+test -x $lxkeymap_prog && edit_lxkeymap=$(cat <<Edit_Lxkeymap
     <hbox>
       <button>
         <input file>$ICONS/keyboard.png</input>
@@ -255,8 +270,8 @@ test -d $lxkeymap_dir  && edit_lxkeymap=$(cat <<Edit_Lxkeymap
 Edit_Lxkeymap
 )
 
-fskbsetting_dir=/usr/share/doc/fskbsetting
-test -d $fskbsetting_dir  && edit_fskbsetting=$(cat <<Edit_Fskbsetting
+fskbsetting_prog=/usr/bin/fskbsetting
+test -d $fskbsetting_prog && edit_fskbsetting=$(cat <<Edit_Fskbsetting
     <hbox>
       <button>
         <input file>$ICONS/usb-creator.png</input>
@@ -269,8 +284,8 @@ test -d $fskbsetting_dir  && edit_fskbsetting=$(cat <<Edit_Fskbsetting
 Edit_Fskbsetting
 )
 
-wallpaper_dir=/usr/share/doc/wallpaper-antix
-test -d $wallpaper_dir  && edit_wallpaper=$(cat <<Edit_Wallpaper
+wallpaper_prog=/usr/local/bin/wallpaper.py
+test -x $wallpaper_prog && edit_wallpaper=$(cat <<Edit_Wallpaper
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-wallpaper.png</input>
@@ -283,8 +298,8 @@ test -d $wallpaper_dir  && edit_wallpaper=$(cat <<Edit_Wallpaper
 Edit_Wallpaper
 )
 
-conky_dir=/usr/share/doc/conky-all
-test -d $conky_dir  && edit_conky=$(cat <<Edit_Conky
+conky_prog=/usr/bin/conky
+test -x $conky_prog && test -w $HOME/.conkyrc && edit_conky=$(cat <<Edit_Conky
     <hbox>
       <button>
         <input file>$ICONS/utilities-system-monitor.png</input>
@@ -297,8 +312,8 @@ test -d $conky_dir  && edit_conky=$(cat <<Edit_Conky
 Edit_Conky
 )
 
-lxappearance_dir=/usr/share/doc/lxappearance
-test -d $lxappearance_dir  && edit_lxappearance=$(cat <<Edit_Lxappearance
+lxappearance_prog=/usr/bin/lxappearance
+test -x $lxappearance_prog && edit_lxappearance=$(cat <<Edit_Lxappearance
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-theme.png</input>
@@ -311,8 +326,8 @@ test -d $lxappearance_dir  && edit_lxappearance=$(cat <<Edit_Lxappearance
 Edit_Lxappearance
 )
 
-prefapps_dir=/usr/share/doc/desktop-session-antix
-test -d $prefapps_dir  && edit_prefapps=$(cat <<Edit_Prefapps
+prefapps_prog=/usr/local/bin/desktop-defaults-set
+test -x $prefapps_prog && edit_prefapps=$(cat <<Edit_Prefapps
     <hbox>
       <button>
         <input file>$ICONS/applications-system.png</input>
@@ -325,8 +340,8 @@ test -d $prefapps_dir  && edit_prefapps=$(cat <<Edit_Prefapps
 Edit_Prefapps
 )
 
-packageinstaller_dir=/usr/share/doc/packageinstaller
-test -d $packageinstaller_dir  && edit_packageinstaller=$(cat <<Edit_Packageinstaller
+packageinstaller_prog=/usr/bin/packageinstaller
+test -x $packageinstaller_prog && edit_packageinstaller=$(cat <<Edit_Packageinstaller
     <hbox>
       <button>
         <input file>$ICONS/packageinstaller.png</input>
@@ -339,8 +354,8 @@ test -d $packageinstaller_dir  && edit_packageinstaller=$(cat <<Edit_Packageinst
 Edit_Packageinstaller
 )
 
-svconf_dir=/usr/share/doc/sysv-rc-conf
-test -d $sysvconf_dir  && edit_sysvconf=$(cat <<Edit_Sysvconf
+svconf_prog=/usr/sbin/sysv-rc-conf
+test -x $sysvconf_prog && edit_sysvconf=$(cat <<Edit_Sysvconf
     <hbox>
       <button>
         <input file>$ICONS/gnome-settings-default-applications.png</input>
@@ -353,8 +368,9 @@ test -d $sysvconf_dir  && edit_sysvconf=$(cat <<Edit_Sysvconf
 Edit_Sysvconf
 )
 
-tzdata_dir=/usr/share/doc/tzdata
-test -d $tzdata_dir  && edit_tzdata=$(cat <<Edit_Tzdata
+tzdata_dir=/usr/share/zoneinfo
+tzdata_prog=/usr/sbin/dpkg-reconfigure
+test -x $tzdata_prog && && test -d $tzdata_dir && edit_tzdata=$(cat <<Edit_Tzdata
     <hbox>
       <button>
         <input file>$ICONS/time-admin.png</input>
@@ -367,8 +383,8 @@ test -d $tzdata_dir  && edit_tzdata=$(cat <<Edit_Tzdata
 Edit_Tzdata
 )
 
-ceni_dir=/usr/share/doc/ceni
-test -d $ceni_dir  && edit_ceni=$(cat <<Edit_Ceni
+ceni_prog=/usr/bin/ceni
+test -x $ceni_prog && edit_ceni=$(cat <<Edit_Ceni
     <hbox>
       <button>
         <input file>$ICONS/network-wired.png</input>
@@ -381,8 +397,8 @@ test -d $ceni_dir  && edit_ceni=$(cat <<Edit_Ceni
 Edit_Ceni
 )
 
-umts_dir=/usr/share/doc/umts-panel2
-test -d $umts_dir  && edit_umts=$(cat <<Edit_Umts
+umts_prog=/usr/bin/umts-panel
+test -x $umts_prog && edit_umts=$(cat <<Edit_Umts
     <hbox>
       <button>
         <input file>$ICONS/network-wired.png</input>
@@ -395,8 +411,8 @@ test -d $umts_dir  && edit_umts=$(cat <<Edit_Umts
 Edit_Umts
 )
 
-connectshares_dir=/usr/share/doc/connectshares-antix
-test -d $connectshares_dir  && edit_connectshares=$(cat <<Edit_Connectshares
+connectshares_prog=/usr/local/bin/connectshares-config
+test -x $connectshares_prog && edit_connectshares=$(cat <<Edit_Connectshares
     <hbox>
       <button>
         <input file>$ICONS/connectshares-config.png</input>
@@ -409,8 +425,8 @@ test -d $connectshares_dir  && edit_connectshares=$(cat <<Edit_Connectshares
 Edit_Connectshares
 )
 
-disconnectshares_dir=/usr/share/doc/connectshares-antix
-test -d $disconnectshares_dir  && edit_disconnectshares=$(cat <<Edit_Disconnectshares
+disconnectshares_prog=/usr/local/bin/disconnectshares
+test -x $disconnectshares_prog && edit_disconnectshares=$(cat <<Edit_Disconnectshares
     <hbox>
       <button>
         <input file>$ICONS/connectshares.png</input>
@@ -423,8 +439,8 @@ test -d $disconnectshares_dir  && edit_disconnectshares=$(cat <<Edit_Disconnects
 Edit_Disconnectshares
 )
 
-droopy_dir=/usr/share/doc/droopy-antix
-test -d $droopy_dir  && edit_droopy=$(cat <<Edit_Droopy
+droopy_prog=/usr/local/bin/droopy.sh
+test -x $droopy_prog && edit_droopy=$(cat <<Edit_Droopy
     <hbox>
       <button>
         <input file>$ICONS2/droopy.png</input>
@@ -437,8 +453,8 @@ test -d $droopy_dir  && edit_droopy=$(cat <<Edit_Droopy
 Edit_Droopy
 )
 
-gnomeppp_dir=/usr/share/doc/gnome-ppp
-test -d $gnomeppp_dir  && edit_gnomeppp=$(cat <<Edit_Gnomeppp
+gnomeppp_prog=/usr/bin/gnome-ppp
+test -x $gnomeppp_prog && edit_gnomeppp=$(cat <<Edit_Gnomeppp
     <hbox>
       <button>
         <input file>$ICONS/internet-telephony.png</input>
@@ -451,8 +467,8 @@ test -d $gnomeppp_dir  && edit_gnomeppp=$(cat <<Edit_Gnomeppp
 Edit_Gnomeppp
 )
 
-wpasupplicant_dir=/usr/share/doc/wpasupplicant
-test -d $wpasupplicant_dir  && edit_wpasupplicant=$(cat <<Edit_Wpasupplicant
+wpasupplicant_prog=/usr/sbin/doc/wpa_gui
+test -x $wpasupplicant_prog && edit_wpasupplicant=$(cat <<Edit_Wpasupplicant
     <hbox>
       <button>
         <input file>$ICONS/nm-device-wireless.png</input>
@@ -465,8 +481,8 @@ test -d $wpasupplicant_dir  && edit_wpasupplicant=$(cat <<Edit_Wpasupplicant
 Edit_Wpasupplicant
 )
 
-pppoeconf_dir=/usr/share/doc/pppoeconf
-test -d $pppoeconf_dir  && edit_pppoeconf=$(cat <<Edit_Pppoeconf
+pppoeconf_prog=/usr/sbin/pppoeconf
+test -x $pppoeconf_prog && edit_pppoeconf=$(cat <<Edit_Pppoeconf
     <hbox>
       <button>
         <input file>$ICONS/internet-telephony.png</input>
@@ -479,8 +495,8 @@ test -d $pppoeconf_dir  && edit_pppoeconf=$(cat <<Edit_Pppoeconf
 Edit_Pppoeconf
 )
 
-adblock_dir=/usr/share/doc/advert-block-antix
-test -d $adblock_dir  && edit_adblock=$(cat <<Edit_Adblock
+adblock_dir=/usr/local/bin/block-advert.sh
+test -x $adblock_prog && edit_adblock=$(cat <<Edit_Adblock
     <hbox>
       <button>
         <input file>$ICONS2/advert-block.png</input>
@@ -493,8 +509,9 @@ test -d $adblock_dir  && edit_adblock=$(cat <<Edit_Adblock
 Edit_Adblock
 )
 
-slim_dir=/usr/share/doc/slim
-test -d $slim_dir  && edit_slim=$(cat <<Edit_Slim
+slim_cc=/usr/local/bin/antixccslim.sh
+slim_prog=/usr/bin/slim
+test -x $slim_prog && test -x $slim_cc && edit_slim=$(cat <<Edit_Slim
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-wallpaper.png</input>
@@ -507,8 +524,8 @@ test -d $slim_dir  && edit_slim=$(cat <<Edit_Slim
 Edit_Slim
 )
 
-grub_dir=/usr/share/doc/grub-common
-test -d $grub_dir  && edit_grub=$(cat <<Edit_Grub
+grub_prog=/usr/local/bin/antixccgrub.sh
+test -x $grub_prog && edit_grub=$(cat <<Edit_Grub
     <hbox>
       <button>
         <input file>$ICONS/screensaver.png</input>
@@ -521,8 +538,7 @@ test -d $grub_dir  && edit_grub=$(cat <<Edit_Grub
 Edit_Grub
 )
 
-confroot_dir=/usr/share/doc/geany
-test -d $confroot_dir  && edit_confroot=$(cat <<Edit_Confroot
+which $EDITOR &>/dev/null && edit_confroot=$(cat <<Edit_Confroot
     <hbox>
       <button>
         <input file>$ICONS/gnome-documents.png</input>
@@ -535,8 +551,8 @@ test -d $confroot_dir  && edit_confroot=$(cat <<Edit_Confroot
 Edit_Confroot
 )
 
-arandr_dir=/usr/share/doc/arandr
-test -d $arandr_dir  && edit_arandr=$(cat <<Edit_Arandr
+arandr_prog=/usr/bin/arandr
+test -x $arandr_prog && edit_arandr=$(cat <<Edit_Arandr
     <hbox>
       <button>
         <input file>$ICONS/video-display.png</input>
@@ -549,8 +565,8 @@ test -d $arandr_dir  && edit_arandr=$(cat <<Edit_Arandr
 Edit_Arandr
 )
 
-gksu_dir=/usr/share/doc/gksu
-test -d $gksu_dir  && edit_gksu=$(cat <<Edit_Gksu
+gksu_prog=/usr/bin/gksu-properties
+test -x $gksu_prog && edit_gksu=$(cat <<Edit_Gksu
     <hbox>
       <button>
         <input file>$ICONS2/gksu.png</input>
@@ -563,8 +579,8 @@ test -d $gksu_dir  && edit_gksu=$(cat <<Edit_Gksu
 Edit_Gksu
 )
 
-slimlogin_dir=/usr/share/doc/slim
-test -d $slimlogin_dir  && edit_slimlogin=$(cat <<Edit_Slimlogin
+slimlogin_prog=/usr/local/bin/slim-login
+test -x $slimlogin_prog && edit_slimlogin=$(cat <<Edit_Slimlogin
     <hbox>
       <button>
         <input file>$ICONS/preferences-system-login.png</input>
@@ -577,8 +593,8 @@ test -d $slimlogin_dir  && edit_slimlogin=$(cat <<Edit_Slimlogin
 Edit_Slimlogin
 )
 
-screenblank_dir=/usr/share/doc/set-screen-blank-antix
-test -d $screenblank_dir  && edit_screenblank=$(cat <<Edit_Screenblank
+screenblank_prog=/usr/local/bin/set-screen-blank
+test -x $screenblank_prog && edit_screenblank=$(cat <<Edit_Screenblank
     <hbox>
       <button>
         <input file>$ICONS/screensaver.png</input>
@@ -605,8 +621,8 @@ test -d $desktopsession_dir  && edit_desktopsession=$(cat <<Edit_Desktopsession
 Edit_Desktopsession
 )
 
-automount_dir=/usr/share/doc/automount-antix
-test -d $automount_dir  && edit_automount=$(cat <<Edit_Automount
+automount_prog=/usr/local/bin/automount-config
+test -x $automount_prog && edit_automount=$(cat <<Edit_Automount
     <hbox>
       <button>
         <input file>$ICONS/mountbox.png</input>
@@ -619,8 +635,8 @@ test -d $automount_dir  && edit_automount=$(cat <<Edit_Automount
 Edit_Automount
 )
 
-mountbox_dir=/usr/share/doc/mountbox-antix
-test -d $mountbox_dir  && edit_mountbox=$(cat <<Edit_Mountbox
+mountbox_prog=/usr/local/bin/mountbox
+test -x $mountbox_prog && edit_mountbox=$(cat <<Edit_Mountbox
     <hbox>
       <button>
         <input file>$ICONS/mountbox.png</input>
@@ -633,8 +649,10 @@ test -d $mountbox_dir  && edit_mountbox=$(cat <<Edit_Mountbox
 Edit_Mountbox
 )
 
-liveusb_dir=/usr/share/doc/live-usb-gui-antix
-test -d $liveusb_dir  && edit_liveusb=$(cat <<Edit_Liveusb
+liveusb_prog_g=/usr/local/bin/live-usb-maker-gui
+liveusb_prog=/usr/local/bin/live-usb-maker
+if test -x $liveusb_prog_g; then 
+    edit_liveusb=$(cat <<Edit_Liveusb
     <hbox>
       <button>
         <input file>$ICONS/usb-creator.png</input>
@@ -647,8 +665,23 @@ test -d $liveusb_dir  && edit_liveusb=$(cat <<Edit_Liveusb
 Edit_Liveusb
 )
 
-partimage_dir=/usr/share/doc/partimage
-test -d $partimage_dir  && edit_partimage=$(cat <<Edit_Partimage
+elif test -x $liveusb_prog; then
+    edit_liveusb=$(cat <<Edit_Liveusb
+    <hbox>
+      <button>
+        <input file>$ICONS/usb-creator.png</input>
+        <action> desktop-defaults-run sudo &live-usb-maker &</action>
+      </button>
+      <text use-markup="true" width-chars="32">
+        <label>$(echo $"Install to USB")</label>
+      </text>
+    </hbox>
+Edit_Liveusb
+)
+fi
+
+partimage_prog=/usr/sbin/partimage
+test -x $partimage_prog && edit_partimage=$(cat <<Edit_Partimage
     <hbox>
       <button>
         <input file>$ICONS/drive-harddisk-system.png</input>
@@ -661,8 +694,8 @@ test -d $partimage_dir  && edit_partimage=$(cat <<Edit_Partimage
 Edit_Partimage
 )
 
-grsync_dir=/usr/share/doc/grsync
-test -d $grsync_dir  && edit_grsync=$(cat <<Edit_Grsync
+grsync_prog=/usr/bin/grsync
+test -x $grsync_prog && edit_grsync=$(cat <<Edit_Grsync
     <hbox>
       <button>
         <input file>$ICONS/grsync.png</input>
@@ -675,8 +708,8 @@ test -d $grsync_dir  && edit_grsync=$(cat <<Edit_Grsync
 Edit_Grsync
 )
 
-gparted_dir=/usr/share/doc/gparted
-test -d $gparted_dir  && edit_gparted=$(cat <<Edit_Gparted
+gparted_prog=/usr/sbin/gparted
+test -x $gparted_prog && edit_gparted=$(cat <<Edit_Gparted
     <hbox>
       <button>
         <input file>$ICONS/gparted.png</input>
@@ -689,8 +722,8 @@ test -d $gparted_dir  && edit_gparted=$(cat <<Edit_Gparted
 Edit_Gparted
 )
 
-setdpi_dir=/usr/share/doc/set-dpi-antix
-test -d $setdpi_dir  && edit_setdpi=$(cat <<Edit_Setdpi
+setdpi_prog=/usr/local/bin/set-dpi
+test -x $setdpi_prog && edit_setdpi=$(cat <<Edit_Setdpi
     <hbox>
       <button>
         <input file>$ICONS/fonts.png</input>
@@ -703,8 +736,8 @@ test -d $setdpi_dir  && edit_setdpi=$(cat <<Edit_Setdpi
 Edit_Setdpi
 )
 
-inxi_dir=/usr/share/doc/inxi-gui-antix
-test -d $inxi_dir  && edit_inxi=$(cat <<Edit_Inxi
+inxi_prog=/usr/local/bin/inxi-gui
+test -x $inxi_prog && edit_inxi=$(cat <<Edit_Inxi
     <hbox>
       <button>
         <input file>$ICONS2/info_blue.png</input>
@@ -717,8 +750,8 @@ test -d $inxi_dir  && edit_inxi=$(cat <<Edit_Inxi
 Edit_Inxi
 )
 
-mouse_dir=/usr/share/doc/ds-mouse-antix
-test -d $mouse_dir  && edit_mouse=$(cat <<Edit_Mouse
+mouse_prog=/usr/local/bin/ds-mouse
+test -x $mouse_prog && edit_mouse=$(cat <<Edit_Mouse
     <hbox>
       <button>
         <input file>$ICONS/input-mouse.png</input>
@@ -731,8 +764,8 @@ test -d $mouse_dir  && edit_mouse=$(cat <<Edit_Mouse
 Edit_Mouse
 )
 
-soundcard_dir=/usr/share/doc/antixgoodies
-test -d $soundcard_dir  && edit_soundcard=$(cat <<Edit_Soundcard
+soundcard_prog=/usr/local/bin/alsa-set-default-card
+test -x $soundcard_prog && edit_soundcard=$(cat <<Edit_Soundcard
     <hbox>
       <button>
         <input file>$ICONS2/soundcard.png</input>
@@ -745,8 +778,8 @@ test -d $soundcard_dir  && edit_soundcard=$(cat <<Edit_Soundcard
 Edit_Soundcard
 )
 
-mixer_dir=/usr/share/doc/alsamixer-equalizer-antix
-test -d $mixer_dir  && edit_mixer=$(cat <<Edit_Mixer
+mixer_prog=/usr/bin/alsamixer
+test -x $mixer_prog && edit_mixer=$(cat <<Edit_Mixer
     <hbox>
       <button>
         <input file>$ICONS/audio-volume-high-panel.png</input>
@@ -759,8 +792,8 @@ test -d $mixer_dir  && edit_mixer=$(cat <<Edit_Mixer
 Edit_Mixer
 )
 
-atidriver_dir=/usr/share/doc/ddm-mx
-test -d $atidriver_dir  && edit_atidriver=$(cat <<Edit_Atidriver
+ddm_prog=/usr/local/bin/ddm-mx
+test -x $ddm_prog && edit_atidriver=$(cat <<Edit_Atidriver
     <hbox>
       <button>
         <input file>$ICONS2/amd-ddm-mx.png</input>
@@ -773,8 +806,7 @@ test -d $atidriver_dir  && edit_atidriver=$(cat <<Edit_Atidriver
 Edit_Atidriver
 )
 
-nvdriver_dir=/usr/share/doc/ddm-mx
-test -d $nvdriver_dir  && edit_nvdriver=$(cat <<Edit_Nvdriver
+test -x $ddm_prog && edit_nvdriver=$(cat <<Edit_Nvdriver
     <hbox>
       <button>
         <input file>$ICONS2/nvidia-ddm-mx.png</input>
@@ -787,8 +819,8 @@ test -d $nvdriver_dir  && edit_nvdriver=$(cat <<Edit_Nvdriver
 Edit_Nvdriver
 )
 
-ndiswrapper_dir=/usr/share/doc/ndisgtk
-test -d $ndiswrapper_dir  && edit_ndiswrapper=$(cat <<Edit_Ndiswrapper
+ndiswrapper_prog=/usr/sbin/ndisgtk
+test -x $ndiswrapper_prog && edit_ndiswrapper=$(cat <<Edit_Ndiswrapper
     <hbox>
       <button>
         <input file>$ICONS/computer.png</input>
@@ -801,8 +833,8 @@ test -d $ndiswrapper_dir  && edit_ndiswrapper=$(cat <<Edit_Ndiswrapper
 Edit_Ndiswrapper
 )
 
-snapshot_dir=/usr/share/doc/iso-snapshot-antix
-test -d $snapshot_dir  && edit_snapshot=$(cat <<Edit_Snapshot
+snapshot_prog=/usr/bin/isosnapshot
+test -x $snapshot_prog && edit_snapshot=$(cat <<Edit_Snapshot
     <hbox>
       <button>
         <input file>$ICONS/preferences-system.png</input>
@@ -815,8 +847,8 @@ test -d $snapshot_dir  && edit_snapshot=$(cat <<Edit_Snapshot
 Edit_Snapshot
 )
 
-soundtest_dir=/usr/share/doc/alsa-tools
-test -d $soundtest_dir  && edit_soundtest=$(cat <<Edit_Soundtest
+soundtest_prog=/usr/bin/speaker-test
+test -x $soundtest_prog  && edit_soundtest=$(cat <<Edit_Soundtest
     <hbox>
       <button>
         <input file>$ICONS/preferences-desktop-sound.png</input>
@@ -829,8 +861,8 @@ test -d $soundtest_dir  && edit_soundtest=$(cat <<Edit_Soundtest
 Edit_Soundtest
 )
 
-menumanager_dir=/usr/share/doc/menu-manager-antix
-test -d $menumanager_dir  && edit_menumanager=$(cat <<Edit_Menumanager
+menumanager_prog=/usr/local/bin/menu_manager.sh
+test -x $menumanager_prog && edit_menumanager=$(cat <<Edit_Menumanager
     <hbox>
       <button>
         <input file>$ICONS2/menu_manager.png</input>
@@ -843,8 +875,8 @@ test -d $menumanager_dir  && edit_menumanager=$(cat <<Edit_Menumanager
 Edit_Menumanager
 )
 
-usermanager_dir=/usr/share/doc/user-management-antix
-test -d $usermanager_dir  && edit_usermanager=$(cat <<Edit_Usermanager
+usermanager_prog=/usr/local/bin/user-management
+test -x $usermanager_prog && edit_usermanager=$(cat <<Edit_Usermanager
     <hbox>
       <button>
         <input file>$ICONS/config-users.png</input>
@@ -857,8 +889,8 @@ test -d $usermanager_dir  && edit_usermanager=$(cat <<Edit_Usermanager
 Edit_Usermanager
 )
 
-galternatives_dir=/usr/share/doc/galternatives
-test -d $galternatives_dir  && edit_galternatives=$(cat <<Edit_Galternatives
+galternatives_prog=/usr/bin/galternatives
+test -x $galternatives_prog && edit_galternatives=$(cat <<Edit_Galternatives
     <hbox>
       <button>
         <input file>$ICONS2/galternatives.png</input>
@@ -871,8 +903,8 @@ test -d $galternatives_dir  && edit_galternatives=$(cat <<Edit_Galternatives
 Edit_Galternatives
 )
 
-codecs_dir=/usr/share/doc/codecs-antix
-test -d $codecs_dir  && edit_codecs=$(cat <<Edit_Codecs
+codecs_prog=/usr/sbin/codecs
+test -x $codecs_prog && edit_codecs=$(cat <<Edit_Codecs
     <hbox>
       <button>
         <input file>$ICONS/applications-system.png</input>
@@ -885,8 +917,8 @@ test -d $codecs_dir  && edit_codecs=$(cat <<Edit_Codecs
 Edit_Codecs
 )
 
-broadcom_dir=/usr/share/doc/broadcom-manager-antix
-test -d $broadcom_dir  && edit_broadcom=$(cat <<Edit_Broadcom
+broadcom_prog=/usr/sbin/broadcom-manager
+test -x $broadcom_prog && edit_broadcom=$(cat <<Edit_Broadcom
     <hbox>
       <button>
         <input file>$ICONS/palimpsest.png</input>
@@ -979,6 +1011,7 @@ $edit_jwm
 $edit_conky 
   </vbox>
   <vbox>
+$edit_setdpi  
 $edit_lxappearance
 $edit_fluxbox
 $edit_prefapps  
@@ -1051,7 +1084,6 @@ $edit_gparted
 </hbox> </frame> </vbox>
 <vbox> <frame> <hbox>
   <vbox>
-$edit_setdpi  
 $edit_printer 
 $edit_inxi 
 $edit_mouse
