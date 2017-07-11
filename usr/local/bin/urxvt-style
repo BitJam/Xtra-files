@@ -108,7 +108,6 @@ main() {
     while [ $# -gt 0 -a -z "${1##-*}" ]; do
         arg=${1#-}; shift
 
-        echo "arg=$arg"
         case $arg in
             -dir|-file|[df]) 
                 [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
@@ -120,7 +119,6 @@ main() {
               *)  val="???"     ;;
         esac
 
-        echo "arg=$arg"
         case $arg in
      -dir=*|-dir|d=*|d) DIR=$val              ;;
    -file=*|-file|f=*|f) DEF_FILE=$val         ;;
