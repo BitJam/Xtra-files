@@ -19,6 +19,7 @@
 # 11 July 2017 by BitJam:
 #   * use a subroutine to greatly consolidate code
 #   * use existence of executable as the key instead of documentation directory
+#     perhaps I should switch to "which" or "type"
 #   * move set-dpi to desktop tab
 #   * enable ati driver button in hardware tab
 #
