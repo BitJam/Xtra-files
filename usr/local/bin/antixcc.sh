@@ -325,9 +325,9 @@ liveusb_entry=$(entry \
      $"Create Live-USB (live-usb-maker)")
 fi
 
-installer_prog=/usr/bin/minstall
+installer_prog=/usr/sbin/minstall
 test -x $installer_prog && installer_entry=$(entry \
-    $ICONS/msystem.png \
+    $ICONS2/msystem.png \
     "gksudo $installer_prog &" \
     $"Install antiX Linux")
 
@@ -437,6 +437,12 @@ test -x $broadcom_prog && broadcom_entry=$(entry \
     $ICONS/palimpsest.png \
     "su-to-root -X -c broadcom-manager &" \
     $"Network Troubleshooting")
+
+which backlight-brightness &>/dev/null && [ -n "$(ls /sys/class/backlight 2>/dev/null)" ] \
+    && backlight_entry=$(entry \
+    "/usr/share/icons/Adwaita/48x48/devices/video-display-symbolic.symbolic.png" \
+    "desktop-defaults-run -t backlight-brightness &" \
+    $"Backlight brightness")
 
 [ -e /etc/live/config/save-persist -o -e /etc/live/config/persist-save.conf ]  && persist_save=$(entry \
     $ICONS/palimpsest.png \
@@ -563,6 +569,7 @@ $gparted_entry
 $printer_entry
 $inxi_entry
 $mouse_entry
+$backlight_entry
   </vbox>
   <vbox>
 $soundcard_entry
