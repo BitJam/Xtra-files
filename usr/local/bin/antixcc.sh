@@ -127,7 +127,7 @@ unetbootin_prog=/usr/bin/unetbootin
 test -x $unetbootin_prog  && unetbootin_entry=$(entry \
     $ICONS/usb-creator.png \
     "gksu unetbootin &" \
-    $"Install to USB retain partitions (UNetbootin)")
+    $"Create Live-USB retain partitions (UNetbootin)")
 
 printer_prog=/usr/bin/system-config-printer
 test -x $printer_prog  && printer_entry=$(entry \
@@ -316,14 +316,20 @@ if test -x $liveusb_prog_g; then
 liveusb_entry=$(entry \
     $ICONS/usb-creator.png \
     "gksu live-usb-maker-gui &" \
-    $"Install to USB")
+    $"Create Live-USB (live-usb-maker-gui)")
 
 elif test -x $liveusb_prog; then
 liveusb_entry=$(entry \
     $ICONS/usb-creator.png \
      "desktop-defaults-run sudo &live-usb-maker &" \
-    $"Install to USB")
+     $"Create Live-USB (live-usb-maker)")
 fi
+
+installer_prog=/usr/bin/minstall
+test -x $installer_prog && installer_entry=$(entry \
+    $ICONS/msystem.png \
+    "gksudo $installer_prog &" \
+    $"Install antiX Linux")
 
 partimage_prog=/usr/sbin/partimage
 test -x $partimage_prog && partimage_entry=$(entry \
@@ -541,6 +547,7 @@ $live_tab
 <vbox> <frame> <hbox>
   <vbox>
 $automount_entry
+$installer_entry
 $mountbox_entry
 $unetbootin_entry
   </vbox>
