@@ -47,6 +47,8 @@ the order.
 
     $ME fbdev,vesa
 
+NOTE: "$DEFAULT_DRIVER" and "default" and "safe" all do the same thing now.
+
 Options:
     -f --force          Force creation even if driver specfied is not found
     -h --help           Show this usage
@@ -57,10 +59,10 @@ Xorg Arguments:
 A comma delimited list of options.  Note that "composite" can be
 abbreviated as "c" and "depth" can be abbrevaiated as "d".
 
-    safe              Set driver to "$DEFAUL_DRIVER" and set default resolutions
+    safe              Set driver to "$DEFAUL_DRIVER"
     auto              Set default resolutions
     c, composite      Tell xorg to use compositor (for graphics effects)
-    default           Set $DEFAUL_DRIVER driver and default resolutions
+    default           Set driver to "$DEFAULT_DRIVER"
     HHHHxWWWW         Set the resolution
     d=xx, depth=xx    Set the default color depth
     h=xxxx            Set horizontal sync frequency range
@@ -235,7 +237,7 @@ driver_entry() {
     #=========================================================================
 Driver_Error
     fi
-    
+
     printf "$newline    Driver     \"$driver\""
 }
 
