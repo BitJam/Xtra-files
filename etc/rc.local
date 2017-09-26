@@ -1,0 +1,41 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+
+restore=/live/etc/init.d/live-restore-services
+
+[ -x $restore ] && $restore start
+
+# Restore files under /sys *after* udev has run, otherwise
+# the module we want to manipulate may not be loaded yet.
+usb_save=/live/etc/init.d/live-usb-save
+[ -x $usb_save ] && $usb_save sys
+
+# Add a background image to every virtual console if the splash
+# boot parameter was given
+splash=/sbin/splash-all
+test -x $splash && $splash --auto
+
+# Enable fstab auto-stuff after udev has run
+fstab_rules=/live/etc/udev/rules.d/90-fstab-automount.rules
+if [ -e /live/config/fstab-hotplug -a -e $fstab_rules ]; then
+    cp $fstab_rules /etc/udev/rules.d/
+    touch /etc/fstab.hotplug
+    udevadm control --reload-rules
+fi
+
+# Detect and set up correct broadcom
+/usr/local/bin/BroadcomStartup
+
+# Automatically switch to vt2 when fdb+ cheat is used
+egrep -q "(^| )fdb\+( |$)" /proc/cmdline && chvt 2
+
+exit 0
