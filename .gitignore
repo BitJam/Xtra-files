@@ -1,17 +1,3 @@
 .*~
 .*.swp
 .Private
-usr/lib/
-usr/local/bin/antiX-cli-cc
-usr/local/bin/backlight-brightness
-usr/local/bin/cli-aptiX
-usr/local/bin/console-font-select
-usr/local/bin/console-width-select
-usr/local/bin/live-kernel-updater
-usr/local/bin/live-usb-maker
-usr/local/bin/splash-select
-usr/local/lib/
-usr/local/share/
-usr/sbin/
-usr/share/
-
