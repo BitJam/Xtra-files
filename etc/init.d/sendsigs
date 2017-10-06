@@ -46,8 +46,6 @@ do_stop () {
         OMITPIDS="$OMITPIDS${OMITPIDS:+ }-o $pid"
     done
 
-    echo "omit list: " $OMITPIDS
-
 	for omitfile in /run/sendsigs.omit; do
 		if [ -e $omitfile ]; then
 			for pid in $(cat $omitfile); do
@@ -88,8 +86,6 @@ do_stop () {
 
 	# Kill all processes.
 	log_action_begin_msg "Asking all remaining processes to terminate"
-    echo
-    echo "omit pids: " $OMITPIDS
 
 	killall5 -15 $OMITPIDS # SIGTERM
 	log_action_end_msg 0
